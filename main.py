@@ -15,6 +15,8 @@ class Application(Frame):
         self.client_id = 8
         self.grid()
         self.create_widgets()
+        self.account_code = None
+        self.symbol_id, self.symbol = 0, 'AAPL'
 
     def create_widgets(self):
         """ create the window layout. """
@@ -55,10 +57,10 @@ class Application(Frame):
         #create Limit Market
         self.label7 = Label(f1, font=myFont, text="Market").grid(row=0, column=4)
 
-        #create textbox(Entry box for the Symbol)
+        #create combo box for the Symbol
         self.cbSymbol = ttk.Combobox(f1, font=myFont, width=6, textvariable = varSymbol)
-        #self.cbSymbol.bind("<Return>", self.cbSymbol_onEnter) #when the enter key is pressed an event happens
-        #self.cbSymbol.bind('<<ComboboxSelected>>',self.cbSymbol_onEnter)
+        self.cbSymbol.bind("<Return>", self.cbSymbol_onEnter) #when the enter key is pressed an event happens
+        self.cbSymbol.bind('<<ComboboxSelected>>',self.cbSymbol_onEnter)
         self.cbSymbol['values'] = ('AAPL','FB','NFLX')
         self.cbSymbol.grid(row=1, column=1, sticky=W)    
 
@@ -138,10 +140,115 @@ class Application(Frame):
     def connect_to_tws(self):
         self.tws_conn = Connection.create(port=self.port, clientId=self.client_id)
         self.tws_conn.connect()
+        self.register_callback_functions()
         
     def disconnect_it(self):
         self.tws_conn.disconnect()
+
+    def cbSymbol_onEnter(self, event):
+        # cancels Account updates
+        self.tws_conn.reqAccountUpdates(False, self.account_code)
+        # changes characters to upper case
+        varSymbol.set(varSymbol.get().upper())
+        # gets the value of the text from the combobox. cbSymbol
+        # and adds it to the variable mytext
+        mytext = varSymbol.get()
+        # gets list of values from dropdwn list of
+        # cbSymbol combobox
+        vals = self.cbSymbol.cget('values')
+        # selects all in the combobox. cbSymbol
+        self.cbSymbol.select_range(0, END)
+        # checks if symbol exists in the combobox if not it adds it
+        # to the dropdown list
+        if not vals:
+            self.cbSymbol.configure(values = (mytext, ))
+        elif mytext not in vals: 
+            self.cbSymbol.configure(values = vals + (mytext, ))
+        mySymbol = varSymbol.get()
+        self.symbol = mySymbol
+       
+        # calls the cancel_market_data() method   
+        self.cancel_market_data()
+        # sets the text boxes for position and average price to zero
+        #varPosition.set('0')
+        #varAvgPrice.set('0.00')
+        # calls the method to request streaming data
+        self.request_market_data(self.symbol_id, self.symbol)
+        # calls method to request account updates
+        self.request_account_updates(self.account_code)
+        # sets bid and ask price to zero
+        varBid.set('0.00')
+        varAsk.set('0.00')    
     
+    def request_account_updates(self, account_code):  
+        self.tws_conn.reqAccountUpdates(True, self.account_code)
+    def cancel_market_data(self):
+        self.tws_conn.cancelMktData(self.symbol_id)
+    
+    def request_market_data(self, symbol_id, symbol): 
+        contract = self.create_contract(symbol,
+                                        'STK',
+                                        'SMART',
+                                        'NASDAQ',
+                                        'USD')
+        self.tws_conn.reqMktData(symbol_id, contract, '', False)
+        #time.sleep(1)
+ 
+    def tick_event(self, msg):
+        if msg.tickerId == 0: # added this to the code not shown in video ********* 
+            if msg.field == 1: # 1 is for the bid price
+                self.bid_price = msg.price
+            elif msg.field == 2:  # 2 is for the ask price
+                self.ask_price = msg.price
+            elif msg.field == 4:  # 4 represents the last price
+                self.last_prices = msg.price
+                self.monitor_position(msg)
+
+    def create_contract(self, symbol, sec_type, exch, prim_exch, curr):#*
+        contract = Contract()
+        contract.m_symbol = symbol
+        contract.m_secType = sec_type
+        contract.m_exchange = exch
+        contract.m_primaryExch = prim_exch
+        contract.m_currency = curr
+        return contract
+
+    def register_callback_functions(self):
+        # Assign server messages handling function.
+        self.tws_conn.registerAll(self.server_handler)
+
+        # Assign error handling function.
+        self.tws_conn.register(self.error_handler, 'Error')
+
+        # Register market data events.
+        self.tws_conn.register(self.tick_event,
+                               message.tickPrice,
+                               message.tickSize)
+
+    def server_handler(self, msg):
+        if msg.typeName == "nextValidId":
+            self.order_id = msg.orderId
+        elif msg.typeName == "managedAccounts":
+            self.account_code = msg.accountsList
+        elif msg.typeName == "updatePortfolio" \
+                and msg.contract.m_symbol == self.symbol \
+                and msg.contract.m_secType == 'STK':  # added this to my code not shown in video ******
+            self.unrealized_pnl = msg.unrealizedPNL
+            self.realized_pnl = msg.realizedPNL
+            self.position = msg.position
+            self.average_price = msg.averageCost
+        elif msg.typeName == "error" and msg.id != -1:
+            return
+        
+    def error_handler(self, msg):
+        if msg.typeName == 'error'and msg.id != -1:
+            print ('Server Error:', msg)
+
+    def monitor_position(self, msg): #*
+        print ('Last Price = %s' % (self.last_prices))
+        varLast.set(self.last_prices)
+        varBid.set(self.bid_price)
+        varAsk.set(self.ask_price)
 
 
 root = Tk()
