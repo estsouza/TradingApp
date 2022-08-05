@@ -107,13 +107,13 @@ class Application(Frame):
         self.cbTIF = ttk.Combobox(f1, font=myFont, width=7, textvariable=varTIF)
         self.cbTIF['values'] = ('DAY','GTC')
         self.cbTIF.grid(row=3, column =4,sticky = W)
-
+        """
         #create Bid Label
         self.label2 = Label(f1, font=myFont, text="Bid", width=7).grid(row=4, column=2)
 
         #create Ask Label
         self.label3 = Label(f1, font=myFont, text="Ask", width=7).grid(row=4, column=3)
-
+        
         #create textbox(Entry box) for the Bid price
         self.tbBid = Entry(f1, font=myFont, width=7, textvariable = varBid)
         #self.tbBid.bind("<Button-1>", self.tbBid_Click)
@@ -123,6 +123,7 @@ class Application(Frame):
         self.tbAsk = Entry(f1, font=myFont, width=7, textvariable = varAsk)
         #self.tbAsk.bind("<Button-1>", self.tbAsk_Click)
         self.tbAsk.grid(row=5, column=3)
+        """
 
         #create a sell button ***
         self.btnSell = Button(f1, font=('Lucida Grande',10,'bold'), text="SELL", width=9, bg="red", fg="white")
@@ -182,7 +183,8 @@ class Application(Frame):
         self.symbol = mySymbol
        
         # calls the cancel_market_data() method   
-        #self.cancel_market_data()
+        
+        self.cancel_market_data()
         # sets the text boxes for position and average price to zero
         #varPosition.set('0')
         #varAvgPrice.set('0.00')
@@ -191,9 +193,7 @@ class Application(Frame):
         #self.request_market_data(self.symbol)
         # calls method to request account updates
         #self.request_account_updates(self.account_code)
-        # sets bid and ask price to zero
-        varBid.set('0.00')
-        varAsk.set('0.00')    
+        # sets bid and ask price to zero  
     
     def request_market_data(self, symbol):
 
@@ -214,12 +214,12 @@ class Application(Frame):
             websocket.enableTrace(False)
             socket = f'wss://fstream.binance.com/ws/{currency}@kline_1m'
 
-            ws = websocket.WebSocketApp(socket,
+            self.ws = websocket.WebSocketApp(socket,
                                         on_message=on_message,
                                         on_error=on_error,
                                         on_close=on_close)
         
-            ws.run_forever()
+            self.ws.run_forever()
 
             return
         streamKline(self.symbol)
@@ -228,9 +228,16 @@ class Application(Frame):
     def request_account_updates(self, account_code):  
         self.tws_conn.reqAccountUpdates(True, self.account_code)
     def cancel_market_data(self):
-        twm.stop()
+        try:
+            
+            self.ws.close()
+            print("ws encontrado y cerrado")
+
+        except:
+            print("ws no existe")
+            pass
     
-     """
+    """
     def tick_event(self, msg):
         if msg.tickerId == 0: # added this to the code not shown in video ********* 
             if msg.field == 1: # 1 is for the bid price
@@ -259,7 +266,7 @@ class Application(Frame):
         elif msg.typeName == "error" and msg.id != -1:
             return#
             """
-    """    
+"""    
     def error_handler(self, msg):
         if msg.typeName == 'error'and msg.id != -1:
             print ('Server Error:', msg)
