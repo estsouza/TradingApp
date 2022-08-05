@@ -44,9 +44,9 @@ class Application(Frame):
         #create listbox
         self.listbox1 = Listbox(f1, font=('Lucida Grande', 9), width=7)
         #self.listbox1.bind('<Double-Button-1>', self.OnDoubleClick_listbox)
-        self.listbox1.insert(1, 'NFLX')
-        self.listbox1.insert(2, 'AAPL')
-        self.listbox1.insert(3, 'FB')
+        self.listbox1.insert(1, 'SOLUSDT')
+        self.listbox1.insert(2, 'BTCUSDT')
+        self.listbox1.insert(3, 'ETHUSDT')
         self.listbox1.grid(row=0, rowspan=5, column=0, padx=5)
 
 
@@ -63,17 +63,17 @@ class Application(Frame):
         self.label7 = Label(f1, font=myFont, text="Market").grid(row=0, column=4)
 
         #create combo box for the Symbol
-        self.cbSymbol = ttk.Combobox(f1, font=myFont, width=6, textvariable = varSymbol)
+        self.cbSymbol = ttk.Combobox(f1, font=myFont, width=10, textvariable = varSymbol)
         self.cbSymbol.bind("<Return>", self.cbSymbol_onEnter) #when the enter key is pressed an event happens
         self.cbSymbol.bind('<<ComboboxSelected>>',self.cbSymbol_onEnter)
-        self.cbSymbol['values'] = ('AAPL','FB','NFLX')
+        self.cbSymbol['values'] = ('SOLUSDT','BTCUSDT','ETHUSDT')
         self.cbSymbol.grid(row=1, column=1, sticky=W)    
 
         #create spinbox (numericUpDown) for Limit Price
         self.spinQuantity = Spinbox(f1, font=myFont, increment=100, from_=0, to=10000, width=7, textvariable=varQuantity).grid(row=1, column=2)
 
         #create spinbox (numericUpDown) for Limit Price
-        self.spinLimitPrice = Spinbox(f1,font=myFont, format='%8.2f', increment=.01, from_=0.0, to=1000.0, width=7, textvariable=varLimitPrice)
+        self.spinLimitPrice = Spinbox(f1,font=myFont, format='%10.5f', increment=.01, from_=0.0, to=100000.0, width=10, textvariable=varLimitPrice)
         # when control and up or down arrow are pressed call spenLimitDime()
         #self.spinLimitPrice.bind('<Control-Button-1>', self.spinLimitDime)
         # when Alt and up or down arrow are pressed call spenLimitPenny()
@@ -99,7 +99,7 @@ class Application(Frame):
         self.cbOrderType = ttk.Combobox(f1, font=myFont, width=6, textvariable=varOrderType)
         self.cbOrderType['values'] = ('LMT','MKT','STP', 'STP LMT', 'TRAIL', 'MOC','LOC')
         self.cbOrderType.grid(row=3, column =1,sticky = W)
-
+        
         #create textbox(Entry box) for the Primary Exchange
         self.tbPrimaryEx = Entry(f1, font=myFont, width=8, textvariable=varPrimaryEx).grid(row=3, column =3,sticky = W)
 
@@ -137,7 +137,7 @@ class Application(Frame):
         self.label1 = Label(f1, font=myFont, width=8, text="Last").grid(row=6, column =1)
 
         #create textbox(Entry box) for the last price 
-        self.tbLast = Entry(f1, font=myFont, width=8, textvariable = varLast).grid(row=6, column =2,sticky = W)
+        self.tbLast = Entry(f1, font=myFont, width=10, textvariable = varLast).grid(row=6, column =2,sticky = W)
 
 
 
@@ -164,7 +164,7 @@ class Application(Frame):
         # cancels Account updates
         #self.tws_conn.reqAccountUpdates(False, self.account_code) ## BORRAR
         # changes characters to upper case
-        varSymbol.set(varSymbol.get().lower())
+        varSymbol.set(varSymbol.get().upper())
         # gets the value of the text from the combobox. cbSymbol
         # and adds it to the variable mytext
         mytext = varSymbol.get()
@@ -180,7 +180,7 @@ class Application(Frame):
         elif mytext not in vals: 
             self.cbSymbol.configure(values = vals + (mytext, ))
         mySymbol = varSymbol.get()
-        self.symbol = mySymbol
+        self.symbol = mySymbol.lower()
        
         # calls the cancel_market_data() method   
         
@@ -224,9 +224,10 @@ class Application(Frame):
             return
         streamKline(self.symbol)
 
-
+    """
     def request_account_updates(self, account_code):  
         self.tws_conn.reqAccountUpdates(True, self.account_code)
+    """
     def cancel_market_data(self):
         try:
             
@@ -276,14 +277,14 @@ root = Tk()
 root.title("Conexion a Binance")
 root.geometry('600x480')
 root.attributes('-topmost', True)
-varSymbol = StringVar(root, value='NFLX')
+varSymbol = StringVar(root, value='BTCUSDT')
 varQuantity = StringVar(root, value='100')
 varLimitPrice = StringVar()
 varMarket = StringVar(root, value='SMART')
 varOrderType = StringVar(root, value='LMT')
 varPrimaryEx = StringVar(root, value='NASDAQ')
 varTIF = StringVar(root, value='DAY')
-varLast = StringVar()
+varLast = DoubleVar()
 
 app = Application(root)
 
