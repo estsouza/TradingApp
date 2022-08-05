@@ -8,6 +8,8 @@ import keys
 from binance.client import Client
 from binance.enums import *
 
+
+
 class Application(Frame):
 
     def __init__(self, master):
@@ -277,5 +279,6 @@ varLast = StringVar()
 varBid = StringVar()
 varAsk = StringVar()
 app = Application(root)
+
 
 root.mainloop()
