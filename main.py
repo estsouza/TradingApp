@@ -99,7 +99,7 @@ class Application(Frame):
 
         #create textbox(Entry box) for the Order Type ****4****
         self.cbOrderType = ttk.Combobox(f1, font=myFont, width=6, textvariable=varOrderType)
-        self.cbOrderType['values'] = ('LMT','MKT','STP', 'STP LMT', 'TRAIL', 'MOC','LOC')
+        self.cbOrderType['values'] = ('A+T','ACTIV', 'LMT','MKT', 'STP') 
         self.cbOrderType.grid(row=3, column =1,sticky = W)
         """
         #create textbox(Entry box) for the Primary Exchange
@@ -129,11 +129,11 @@ class Application(Frame):
         """
 
         #create a sell button ***
-        self.btnSell = Button(f1, font=('Lucida Grande',10,'bold'), text="SELL", width=9, bg="red", fg="white")
+        self.btnSell = Button(f1, font=('Lucida Grande',10,'bold'), text="SELL", width=9, bg="red", fg="white", command=self.sell)
         self.btnSell.grid(row=5, column=1, sticky=W)
 
         #create a buy button ***
-        self.btnBuy = Button(f1, font=('Lucida Grande',10,'bold'), text="BUY", width=9, bg="green", fg="white")
+        self.btnBuy = Button(f1, font=('Lucida Grande',10,'bold'), text="BUY", width=9, bg="green", fg="white", command= self.buy)
         self.btnBuy.grid(row=5, column=4, sticky=E)
 
         #create Label
@@ -166,6 +166,22 @@ class Application(Frame):
     def disconnect_it(self):
         self.client = None
         self.check_connection()
+
+    def buy(self):
+        self.symbol = varSymbol.get()  # gets the symbol string from the symbol combo box
+        self.quantity = varQuantity.get()  # gets the share size from the quantity spinbox
+        self.order_type = varOrderType.get()  # gets the order type for the order type combobox
+        self.limit_price = varLimitPrice.get()  # gets the limit price from the limit price spinbox
+        # calls the function place_market order passes variables
+        # symbol, quantity, order type, buy or sell represeted by true or false, and limit price
+        self.place_order(self.symbol, self.quantity, self.order_type, True, self.limit_price)
+    
+    def sell(self):
+        self.symbol = varSymbol.get()
+        self.quantity = varQuantity.get()
+        self.order_type = varOrderType.get()
+        self.limit_price = varLimitPrice.get()
+        self.place_order(self.symbol, self.quantity, self.order_type, False, self.limit_price)
 
     def cancel_all(self):
         self.client.futures_cancel_all_open_orders(symbol= self.symbol)
@@ -245,6 +261,32 @@ class Application(Frame):
         except:
             pass
     
+    def place_order(self, symbol, quantity, order_type, is_buy, limit_price):
+        
+        print (symbol, quantity, order_type, is_buy, limit_price)
+        # tests if is buy or sell
+        buysell = 'BUY' if is_buy else 'SELL'
+        if order_type == 'LIMIT':
+            client.create_order(symbol=symbol.lower(),
+                        side='BUY',
+                        type='LIMIT',
+                        quantity=quantity,
+                        price='{:.8f}'.format(round(limit_price)),
+                        #stopPrice='{:.8f}'.format(round(symbolPrice*1.005,8)),
+                        timeInForce='GTC')
+        #order = self.create_order(order_type, quantity, buysell, limit_price)
+        #self.tws_conn.placeOrder(self.order_id, contract, order)
+        
+    """
+    def create_order(self, order_type, quantity, action, limit_price):  
+        order = Order()
+        order.m_orderType = order_type
+        order.m_totalQuantity = quantity
+        order.m_action = action
+        order.m_lmtPrice = limit_price
+        return order
+        """
+
     """
     def tick_event(self, msg):
         if msg.tickerId == 0: # added this to the code not shown in video ********* 
