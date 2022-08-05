@@ -143,6 +143,7 @@ class Application(Frame):
         try:
             res = self.client.get_server_time()
             if "serverTime" in res.keys():
+                varAsk.set('1')
                 print("logged in")
         except:
             print("logged out")
@@ -265,7 +266,7 @@ class Application(Frame):
 
 
 root = Tk()
-root.title("Connect to IB TWS with Python")
+root.title("Conexion a Binance")
 root.geometry('600x480')
 root.attributes('-topmost', True)
 varSymbol = StringVar(root, value='NFLX')
