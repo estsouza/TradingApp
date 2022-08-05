@@ -4,6 +4,9 @@ from ib.opt import Connection, message
 from tkinter import *
 from tkinter import ttk
 import time
+import keys
+from binance.client import Client
+from binance.enums import *
 
 class Application(Frame):
 
@@ -12,7 +15,6 @@ class Application(Frame):
         ttk.Frame.__init__(self, master)
 
         self.port=7496
-        self.client_id = 8
         self.grid()
         self.create_widgets()
         self.account_code = None
@@ -24,7 +26,7 @@ class Application(Frame):
         myFont = ('Lucida Grande', 12)
 
         #create connect button widget
-        self.btnConnect = ttk.Button(self, text='Connect', command=self.connect_to_tws)
+        self.btnConnect = ttk.Button(self, text='Connect', command=self.connect_to_binance)
         self.btnConnect.grid(row=0, column=0)
         self.btnDisconnect = ttk.Button(self, text='Disconnect', command=self.disconnect_it).grid(row=0, column=1, sticky=W)
 
@@ -135,15 +137,24 @@ class Application(Frame):
 
 
 
+    def check_connection(self):
+        try:
+            res = self.client.get_server_time()
+            if "serverTime" in res.keys():
+                print("logged in")
+        except:
+            print("logged out")
 
-
-    def connect_to_tws(self):
-        self.tws_conn = Connection.create(port=self.port, clientId=self.client_id)
-        self.tws_conn.connect()
-        self.register_callback_functions()
+    def connect_to_binance(self):
+        # initialize the client
+        self.client = Client(keys.API_KEY, keys.API_SECRET, tld='com')
+        self.check_connection()
+        
         
     def disconnect_it(self):
-        self.tws_conn.disconnect()
+        self.client = None
+        self.check_connection()
+        
 
     def cbSymbol_onEnter(self, event):
         # cancels Account updates
