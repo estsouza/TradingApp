@@ -3,7 +3,10 @@ from ib.ext.Order import Order
 from ib.opt import Connection, message
 from tkinter import *
 from tkinter import ttk
-import time
+import threading
+import websocket
+import json
+from binance import AsyncClient, BinanceSocketManager
 import keys
 from binance.client import Client
 from binance.enums import *
@@ -141,7 +144,6 @@ class Application(Frame):
         try:
             res = self.client.get_server_time()
             if "serverTime" in res.keys():
-                varAsk.set('1')
                 print("logged in")
         except:
             print("logged out")
@@ -159,9 +161,9 @@ class Application(Frame):
 
     def cbSymbol_onEnter(self, event):
         # cancels Account updates
-        self.tws_conn.reqAccountUpdates(False, self.account_code)
+        #self.tws_conn.reqAccountUpdates(False, self.account_code) ## BORRAR
         # changes characters to upper case
-        varSymbol.set(varSymbol.get().upper())
+        varSymbol.set(varSymbol.get().lower())
         # gets the value of the text from the combobox. cbSymbol
         # and adds it to the variable mytext
         mytext = varSymbol.get()
@@ -180,32 +182,55 @@ class Application(Frame):
         self.symbol = mySymbol
        
         # calls the cancel_market_data() method   
-        self.cancel_market_data()
+        #self.cancel_market_data()
         # sets the text boxes for position and average price to zero
         #varPosition.set('0')
         #varAvgPrice.set('0.00')
         # calls the method to request streaming data
-        self.request_market_data(self.symbol_id, self.symbol)
+        threading.Thread(target=self.request_market_data, args=[self.symbol]).start()
+        #self.request_market_data(self.symbol)
         # calls method to request account updates
-        self.request_account_updates(self.account_code)
+        #self.request_account_updates(self.account_code)
         # sets bid and ask price to zero
         varBid.set('0.00')
         varAsk.set('0.00')    
     
+    def request_market_data(self, symbol):
+
+        def on_message(ws, message):
+            
+            json_message = json.loads(message)
+            varLast.set(json_message['k']['c']) 
+            
+
+        def on_error(ws, error):
+            print(error)
+
+        def on_close(close_msg):
+            print("### closed ###" + close_msg)
+
+
+        def streamKline(currency):
+            websocket.enableTrace(False)
+            socket = f'wss://fstream.binance.com/ws/{currency}@kline_1m'
+
+            ws = websocket.WebSocketApp(socket,
+                                        on_message=on_message,
+                                        on_error=on_error,
+                                        on_close=on_close)
+        
+            ws.run_forever()
+
+            return
+        streamKline(self.symbol)
+
+
     def request_account_updates(self, account_code):  
         self.tws_conn.reqAccountUpdates(True, self.account_code)
     def cancel_market_data(self):
-        self.tws_conn.cancelMktData(self.symbol_id)
+        twm.stop()
     
-    def request_market_data(self, symbol_id, symbol): 
-        contract = self.create_contract(symbol,
-                                        'STK',
-                                        'SMART',
-                                        'NASDAQ',
-                                        'USD')
-        self.tws_conn.reqMktData(symbol_id, contract, '', False)
-        #time.sleep(1)
- 
+     """
     def tick_event(self, msg):
         if msg.tickerId == 0: # added this to the code not shown in video ********* 
             if msg.field == 1: # 1 is for the bid price
@@ -215,28 +240,10 @@ class Application(Frame):
             elif msg.field == 4:  # 4 represents the last price
                 self.last_prices = msg.price
                 self.monitor_position(msg)
+"""
 
-    def create_contract(self, symbol, sec_type, exch, prim_exch, curr):#*
-        contract = Contract()
-        contract.m_symbol = symbol
-        contract.m_secType = sec_type
-        contract.m_exchange = exch
-        contract.m_primaryExch = prim_exch
-        contract.m_currency = curr
-        return contract
 
-    def register_callback_functions(self):
-        # Assign server messages handling function.
-        self.tws_conn.registerAll(self.server_handler)
-
-        # Assign error handling function.
-        self.tws_conn.register(self.error_handler, 'Error')
-
-        # Register market data events.
-        self.tws_conn.register(self.tick_event,
-                               message.tickPrice,
-                               message.tickSize)
-
+"""
     def server_handler(self, msg):
         if msg.typeName == "nextValidId":
             self.order_id = msg.orderId
@@ -250,18 +257,13 @@ class Application(Frame):
             self.position = msg.position
             self.average_price = msg.averageCost
         elif msg.typeName == "error" and msg.id != -1:
-            return
-        
+            return#
+            """
+    """    
     def error_handler(self, msg):
         if msg.typeName == 'error'and msg.id != -1:
             print ('Server Error:', msg)
-
-    def monitor_position(self, msg): #*
-        print ('Last Price = %s' % (self.last_prices))
-        varLast.set(self.last_prices)
-        varBid.set(self.bid_price)
-        varAsk.set(self.ask_price)
-
+    """
 
 root = Tk()
 root.title("Conexion a Binance")
@@ -275,8 +277,7 @@ varOrderType = StringVar(root, value='LMT')
 varPrimaryEx = StringVar(root, value='NASDAQ')
 varTIF = StringVar(root, value='DAY')
 varLast = StringVar()
-varBid = StringVar()
-varAsk = StringVar()
+
 app = Application(root)
 
 root.mainloop()
