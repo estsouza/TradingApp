@@ -21,7 +21,7 @@ class Application(Frame):
         self.grid()
         self.create_widgets()
         self.account_code = None
-        self.symbol_id, self.symbol = 0, 'AAPL'
+        self.symbol_id, self.symbol = 0, 'BTCUSDT'
 
     def create_widgets(self):
         """ create the window layout. """
@@ -79,9 +79,11 @@ class Application(Frame):
         # when Alt and up or down arrow are pressed call spenLimitPenny()
         #self.spinLimitPrice.bind('<Alt-Button-1>', self.spinLimitPenny) 
         self.spinLimitPrice.grid(row=1, column=3)
-                                       
+
+        """        
         #create textbox(Entry box) for the Market
         self.cbMarket = ttk.Combobox(f1, font=myFont, width=7, textvariable=varMarket).grid(row=1, column=4, sticky = W)
+        """
 
         #create Label OrderType ********-3-****
         self.label8 = Label(f1, font=myFont, text="OrderType").grid(row=2, column =1, sticky=W)
@@ -99,7 +101,7 @@ class Application(Frame):
         self.cbOrderType = ttk.Combobox(f1, font=myFont, width=6, textvariable=varOrderType)
         self.cbOrderType['values'] = ('LMT','MKT','STP', 'STP LMT', 'TRAIL', 'MOC','LOC')
         self.cbOrderType.grid(row=3, column =1,sticky = W)
-        
+        """
         #create textbox(Entry box) for the Primary Exchange
         self.tbPrimaryEx = Entry(f1, font=myFont, width=8, textvariable=varPrimaryEx).grid(row=3, column =3,sticky = W)
 
@@ -107,6 +109,7 @@ class Application(Frame):
         self.cbTIF = ttk.Combobox(f1, font=myFont, width=7, textvariable=varTIF)
         self.cbTIF['values'] = ('DAY','GTC')
         self.cbTIF.grid(row=3, column =4,sticky = W)
+        """
         """
         #create Bid Label
         self.label2 = Label(f1, font=myFont, text="Bid", width=7).grid(row=4, column=2)
@@ -139,7 +142,12 @@ class Application(Frame):
         #create textbox(Entry box) for the last price 
         self.tbLast = Entry(f1, font=myFont, width=10, textvariable = varLast).grid(row=6, column =2,sticky = W)
 
+        # create button for Cancell All
+        self.btnCancelAll = Button(f1, font= ('Lucida Grande', 10), text= 'Cancel All',
+                                width=8, bg="grey", fg="white", command=self.cancel_all)
+        self.btnCancelAll.grid(row=7, column=2)
 
+    
 
     def check_connection(self):
         try:
@@ -158,6 +166,9 @@ class Application(Frame):
     def disconnect_it(self):
         self.client = None
         self.check_connection()
+
+    def cancel_all(self):
+        self.client.futures_cancel_all_open_orders(symbol= self.symbol)
         
 
     def cbSymbol_onEnter(self, event):
@@ -190,7 +201,6 @@ class Application(Frame):
         #varAvgPrice.set('0.00')
         # calls the method to request streaming data
         threading.Thread(target=self.request_market_data, args=[self.symbol]).start()
-        #self.request_market_data(self.symbol)
         # calls method to request account updates
         #self.request_account_updates(self.account_code)
         # sets bid and ask price to zero  
@@ -230,12 +240,9 @@ class Application(Frame):
     """
     def cancel_market_data(self):
         try:
-            
             self.ws.close()
-            print("ws encontrado y cerrado")
 
         except:
-            print("ws no existe")
             pass
     
     """
