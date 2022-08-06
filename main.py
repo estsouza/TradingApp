@@ -10,6 +10,7 @@ from binance import AsyncClient, BinanceSocketManager
 import keys
 from binance.client import Client
 from binance.enums import *
+import time
 
 class Application(Frame):
 
@@ -89,7 +90,7 @@ class Application(Frame):
         self.label8 = Label(f1, font=myFont, text="OrderType").grid(row=2, column =1, sticky=W)
 
         #create Label Visible 
-        self.label9 = Label(f1, font=myFont, text="Visible").grid(row=2, column =2)
+        self.label9 = Label(f1, font=myFont, text="Trailing Rate").grid(row=2, column =2)
 
         #create Label Primary Exchange
         self.labe20 = Label(f1, font=myFont, text="Primary Ex.").grid(row=2, column =3)
@@ -101,6 +102,9 @@ class Application(Frame):
         self.cbOrderType = ttk.Combobox(f1, font=myFont, width=6, textvariable=varOrderType)
         self.cbOrderType['values'] = ('A+T','ACTIV', 'LIMIT','MARKET', 'STP') 
         self.cbOrderType.grid(row=3, column =1,sticky = W)
+
+        #create textbox(SpinBox) for the Trailing Stop Callback Rate
+        self.tbCRate = Spinbox(f1, font=myFont, increment=0.1, from_=0.1, to=5, width=6, textvariable=varCallbackRate).grid(row=3, column=2)
         """
         #create textbox(Entry box) for the Primary Exchange
         self.tbPrimaryEx = Entry(f1, font=myFont, width=8, textvariable=varPrimaryEx).grid(row=3, column =3,sticky = W)
@@ -262,18 +266,23 @@ class Application(Frame):
             pass
     
     def place_order(self, symbol, quantity, order_type, is_buy, limit_price):
-        
-        buysell = 'BUY' if is_buy else 'SELL'
+        if is_buy == True:
+            orderSide = 'BUY'
+            slSide = 'SELL'
+            positionSide= 'LONG'
+        else:
+            orderSide = 'SELL'
+            slSide = 'BUY'
+            positionSide= 'SHORT'
         if order_type == 'A+T':
-            activ_order = self.client.futures_create_order(symbol=symbol, side=buysell, type='STOP_MARKET', quantity=quantity,stopPrice=limit_price, timeInForce='GTC')
-            print(activ_order) 
-            trailing_order = self.client.futures_create_order(symbol=symbol, side='SELL', position_side= 'LONG', type='TRAILING_STOP_MARKET', quantity=quantity,price=limit_price, activationPrice= limit_price, callbackRate=0.2, timeInForce='GTC')
-            print(trailing_order)
+            activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price)
+            trailing_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide= positionSide, type='TRAILING_STOP_MARKET', quantity=quantity, activationPrice= limit_price, callbackRate=varCallbackRate, timeInForce='GTC')
+            """sl_order = self.client.futures_create_order(symbol=symbol, side='SELL', positionSide=positionSide, type='STOP_MARKET', stopPrice='{:.8f}'.format(round(float(limit_price)*0.998,8)), closePosition=True, timeInForce='GTE_GTC')"""
         if order_type == 'LIMIT':
-            limitorder = self.client.futures_create_order(symbol=symbol, side=buysell, type=order_type, quantity=quantity,price=limit_price, 
+            limitorder = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type=order_type, quantity=quantity,price=limit_price, 
             #stopPrice='{:.8f}'.format(round(symbolPrice*1.005,8)),
             timeInForce='GTC')
-            print(limitorder)
+        print(f"{order_type} order placed in {symbol}. Position: {positionSide}, Price: {limit_price}")
         #buylimitorder = self.client.futures_create_order(symbol=self.symbol, side=buysell, type='LIMIT', quantity=0.001, price=20000, timeInForce='GTC')
         #print(buylimitorder)
         
@@ -306,10 +315,8 @@ root.attributes('-topmost', True)
 varSymbol = StringVar(root, value='BTCUSDT')
 varQuantity = StringVar(root, value='100')
 varLimitPrice = StringVar()
-varMarket = StringVar(root, value='SMART')
 varOrderType = StringVar(root, value='A+T')
-varPrimaryEx = StringVar(root, value='NASDAQ')
-varTIF = StringVar(root, value='DAY')
+varCallbackRate = StringVar(root, value='0.1')
 varLast = DoubleVar()
 
 app = Application(root)
