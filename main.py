@@ -86,14 +86,10 @@ class Application(Frame):
         self.cbMarket = ttk.Combobox(f1, font=myFont, width=7, textvariable=varMarket).grid(row=1, column=4, sticky = W)
         """
 
-        #create Label OrderType ********-3-****
+        
         self.label8 = Label(f1, font=myFont, text="OrderType").grid(row=2, column =1, sticky=W)
-
-        #create Label Visible 
-        self.label9 = Label(f1, font=myFont, text="Trailing Rate").grid(row=2, column =2)
-
-        #create Label Primary Exchange
-        self.labe20 = Label(f1, font=myFont, text="Primary Ex.").grid(row=2, column =3)
+        self.label9 = Label(f1, font=myFont, text="Trailing (%)").grid(row=2, column =2)
+        self.labe20 = Label(f1, font=myFont, text="Stop Loss (%)").grid(row=2, column =3)
 
         #create Label Time in Force
         self.labe21 = Label(f1, font=myFont, text="TIF").grid(row=2, column =4)
@@ -104,7 +100,10 @@ class Application(Frame):
         self.cbOrderType.grid(row=3, column =1,sticky = W)
 
         #create textbox(SpinBox) for the Trailing Stop Callback Rate
-        self.tbCRate = Spinbox(f1, font=myFont, increment=0.1, from_=0.1, to=5, width=6, textvariable=varCallbackRate).grid(row=3, column=2)
+        self.spCRate = Spinbox(f1, font=myFont, increment=0.1, from_=0.1, to=5, width=6, textvariable=varCallbackRate).grid(row=3, column=2)
+
+        #create textbox(SpinBox) for the StopLoss Rate
+        self.spStopLoss = Spinbox(f1, font=myFont, increment=0.01, from_=0.01, to=5, width=6, textvariable=varStopLoss).grid(row=3, column=3)
         """
         #create textbox(Entry box) for the Primary Exchange
         self.tbPrimaryEx = Entry(f1, font=myFont, width=8, textvariable=varPrimaryEx).grid(row=3, column =3,sticky = W)
@@ -133,11 +132,11 @@ class Application(Frame):
         """
 
         #create a sell button ***
-        self.btnSell = Button(f1, font=('Lucida Grande',10,'bold'), text="SELL", width=9, bg="red", fg="white", command=self.sell)
+        self.btnSell = Button(f1, font=('Lucida Grande',10,'bold'), text="SHORT", width=9, bg="red", fg="white", command=self.sell)
         self.btnSell.grid(row=5, column=1, sticky=W)
 
         #create a buy button ***
-        self.btnBuy = Button(f1, font=('Lucida Grande',10,'bold'), text="BUY", width=9, bg="green", fg="white", command= self.buy)
+        self.btnBuy = Button(f1, font=('Lucida Grande',10,'bold'), text="LONG", width=9, bg="green", fg="white", command= self.buy)
         self.btnBuy.grid(row=5, column=4, sticky=E)
 
         #create Label
@@ -325,6 +324,7 @@ varQuantity = StringVar(root, value='100')
 varLimitPrice = StringVar()
 varOrderType = StringVar(root, value='A+T')
 varCallbackRate = StringVar(root, value='0.1')
+varStopLoss = DoubleVar(root, value='0.1')
 varLast = DoubleVar()
 
 app = Application(root)
