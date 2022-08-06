@@ -2,6 +2,8 @@
 
 ideas de features
 
+ - definir ticksize por symbol
+
  - Subir SL a dist% fija (ej: -0.05%)
     cancelar el anterior
 
@@ -18,3 +20,4 @@ ideas de features
 
  - panel de ordenes
     para setear el sl
+    

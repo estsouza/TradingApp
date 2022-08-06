@@ -274,7 +274,6 @@ class Application(Frame):
             slSide = 'BUY'
             positionSide= 'SHORT'
         if order_type == 'STP':
-            stopLoss = 0.1
             if positionSide == 'LONG':
                 stopPrice = round(varLast.get()*(1-stopLoss/100),4)
             else:
@@ -282,7 +281,7 @@ class Application(Frame):
             sl_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide=positionSide, type='STOP_MARKET', stopPrice=stopPrice, closePosition=True)
         elif order_type == 'A+T':
             activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price)
-            trailing_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide= positionSide, type='TRAILING_STOP_MARKET', quantity=quantity, activationPrice= limit_price, callbackRate=varCallbackRate, timeInForce='GTC')
+            trailing_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide= positionSide, type='TRAILING_STOP_MARKET', quantity=quantity, activationPrice= limit_price, callbackRate=varCallbackRate.get(), timeInForce='GTC')
             """sl_order = self.client.futures_create_order(symbol=symbol, side='SELL', positionSide=positionSide, type='STOP_MARKET', stopPrice='{:.8f}'.format(round(float(limit_price)*0.998,8)), closePosition=True, timeInForce='GTE_GTC')"""
         elif order_type == 'LIMIT':
             limitorder = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type=order_type, quantity=quantity,price=limit_price, 
