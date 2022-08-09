@@ -275,9 +275,9 @@ class Application(Frame):
             positionSide= 'SHORT'
         if order_type == 'STP':
             if positionSide == 'LONG':
-                stopPrice = round(varLast.get()*(1-stopLoss/100),4)
+                stopPrice = round(varLast.get()*(1-varStopLoss.get()/100),4)
             else:
-                stopPrice = round(varLast.get()*(1+stopLoss/100),4)
+                stopPrice = round(varLast.get()*(1+varStopLoss.get()/100),4)
             sl_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide=positionSide, type='STOP_MARKET', stopPrice=stopPrice, closePosition=True)
         elif order_type == 'A+T':
             activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price)
