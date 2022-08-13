@@ -10,19 +10,18 @@ from binance import AsyncClient, BinanceSocketManager
 import keys
 from binance.client import Client
 from binance.enums import *
-import time
+import set_order_type
 
 class Application(Frame):
-
+    
     def __init__(self, master):
         """Initialize the Frame"""
         ttk.Frame.__init__(self, master)
 
-        self.port=7496
         self.grid()
         self.create_widgets()
-        self.account_code = None
         self.symbol_id, self.symbol = 0, 'BTCUSDT'
+        
 
     def create_widgets(self):
         """ create the window layout. """
@@ -98,7 +97,8 @@ class Application(Frame):
         self.cbOrderType = ttk.Combobox(f1, font=myFont, width=6, textvariable=varOrderType)
         self.cbOrderType['values'] = ('A+T','ACTIV', 'LIMIT','MARKET', 'STP') 
         self.cbOrderType.grid(row=3, column =1,sticky = W)
-
+        
+        
         #create textbox(SpinBox) for the Trailing Stop Callback Rate
         self.spCRate = Spinbox(f1, font=myFont, increment=0.1, from_=0.1, to=5, width=6, textvariable=varCallbackRate).grid(row=3, column=2)
 
@@ -291,7 +291,8 @@ class Application(Frame):
         print(f"{order_type} order placed in {symbol}. Position: {positionSide}, Price: {limit_price}")
         #buylimitorder = self.client.futures_create_order(symbol=self.symbol, side=buysell, type='LIMIT', quantity=0.001, price=20000, timeInForce='GTC')
         #print(buylimitorder)
-        
+
+    
 """
     def server_handler(self, msg):
         if msg.typeName == "nextValidId":
@@ -326,6 +327,14 @@ varCallbackRate = StringVar(root, value='0.1')
 varStopLoss = DoubleVar(root, value='0.1')
 varLast = DoubleVar()
 
-app = Application(root)
+# ShortCuts
+#root.bind('<Control-q>', set_order_type.limit)
+root.bind('<q>', lambda event: varOrderType.set('A+T'))
+root.bind('<w>', lambda event: varOrderType.set('ACTIV'))
+root.bind('<e>', lambda event: varOrderType.set('LIMIT'))
+root.bind('<r>', lambda event: varOrderType.set('MARKET'))
+root.bind('<t>', lambda event: varOrderType.set('STP'))
 
+app = Application(root)
+app.bind()
 root.mainloop()
