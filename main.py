@@ -10,6 +10,7 @@ from binance import AsyncClient, BinanceSocketManager
 import keys
 from binance.client import Client
 from binance.enums import *
+import math
 
 class Application(Frame):
     
@@ -20,7 +21,7 @@ class Application(Frame):
         self.grid()
         self.create_widgets()
         self.symbol_id, self.symbol = 0, 'BTCUSDT'
-        
+        self.client = None
 
     def create_widgets(self):
         """ create the window layout. """
@@ -192,53 +193,37 @@ class Application(Frame):
         print("All orders cancelled")
 
     def cbSymbol_onEnter(self, event):
-        # cancels Account updates
-        #self.tws_conn.reqAccountUpdates(False, self.account_code) ## BORRAR
-        # changes characters to upper case
         varSymbol.set(varSymbol.get().upper())
-        # gets the value of the text from the combobox. cbSymbol
-        # and adds it to the variable mytext
         mytext = varSymbol.get()
-        # gets list of values from dropdwn list of
-        # cbSymbol combobox
         vals = self.cbSymbol.cget('values')
-        # selects all in the combobox. cbSymbol
         self.cbSymbol.select_range(0, END)
-        # checks if symbol exists in the combobox if not it adds it
-        # to the dropdown list
         if not vals:
             self.cbSymbol.configure(values = (mytext, ))
         elif mytext not in vals: 
             self.cbSymbol.configure(values = vals + (mytext, ))
         mySymbol = varSymbol.get()
         self.symbol = mySymbol.lower()
-       
-        # calls the cancel_market_data() method   
-        
         self.cancel_market_data()
-        # sets the text boxes for position and average price to zero
         #varPosition.set('0')
         #varAvgPrice.set('0.00')
-        # calls the method to request streaming data
+        self.ticksize = 0.01
         threading.Thread(target=self.request_market_data, args=[self.symbol]).start()
+        threading.Thread(target=self.request_ticksize, args=[self.symbol]).start()
         # calls method to request account updates
         #self.request_account_updates(self.account_code)
-        # sets bid and ask price to zero  
-    
+            
     def request_market_data(self, symbol):
 
         def on_message(ws, message):
             
             json_message = json.loads(message)
             varLast.set(json_message['k']['c']) 
-            
-
+        
         def on_error(ws, error):
             print(error)
 
         def on_close(close_msg):
             print("### closed ###" + close_msg)
-
 
         def streamKline(currency):
             websocket.enableTrace(False)
@@ -250,9 +235,15 @@ class Application(Frame):
                                         on_close=on_close)
         
             self.ws.run_forever()
-
             return
         streamKline(self.symbol)
+    
+    def request_ticksize(self, symbol):
+        try:
+            request = self.client.get_symbol_info(self.symbol)
+            self.ticksize = float((request['filters'][0]['tickSize']))
+        except:
+            self.check_connection()
 
     """
     def request_account_updates(self, account_code):  
@@ -266,6 +257,7 @@ class Application(Frame):
             pass
     
     def place_order(self, symbol, quantity, order_type, is_buy, limit_price):
+        tickround = int(math.log10(self.ticksize)*-1)
         if is_buy == True:
             orderSide = 'BUY'
             slSide = 'SELL'
@@ -276,9 +268,9 @@ class Application(Frame):
             positionSide= 'SHORT'
         if order_type == 'STP':
             if positionSide == 'LONG':
-                stopPrice = round(varLast.get()*(1-varStopLoss.get()/100),4)
+                stopPrice = round(varLast.get()*(1-varStopLoss.get()/100),tickround)
             else:
-                stopPrice = round(varLast.get()*(1+varStopLoss.get()/100),4)
+                stopPrice = round(varLast.get()*(1+varStopLoss.get()/100),tickround)
             sl_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide=positionSide, type='STOP_MARKET', stopPrice=stopPrice, closePosition=True)
         elif order_type == 'A+T':
             activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price)
@@ -340,16 +332,15 @@ varLast = DoubleVar()
 app = Application(root)
 
 # ShortCuts
-root.bind('<q>', lambda event: varOrderType.set('A+T'))
-root.bind('<w>', lambda event: varOrderType.set('ACTIV'))
-root.bind('<e>', lambda event: varOrderType.set('LIMIT'))
-root.bind('<r>', lambda event: varOrderType.set('MARKET'))
-root.bind('<t>', lambda event: varOrderType.set('STP'))
-root.bind('<z>', lambda event: app.cancel_all())
-root.bind('<a>', lambda event: app.focus_to_qty())
-root.bind('<s>', lambda event: app.focus_to_limit_price())
-root.bind('<z>', lambda event: app.cancel_all())
-root.bind('<c>', lambda event: app.sell())
-root.bind('<v>', lambda event: app.buy())
+root.bind('<Control-q>', lambda event: varOrderType.set('A+T'))
+root.bind('<Control-w>', lambda event: varOrderType.set('ACTIV'))
+root.bind('<Control-e>', lambda event: varOrderType.set('LIMIT'))
+root.bind('<Control-r>', lambda event: varOrderType.set('MARKET'))
+root.bind('<Control-t>', lambda event: varOrderType.set('STP'))
+root.bind('<Control-a>', lambda event: app.focus_to_qty())
+root.bind('<Control-s>', lambda event: app.focus_to_limit_price())
+root.bind('<Control-z>', lambda event: app.cancel_all())
+root.bind('<Control-c>', lambda event: app.sell())
+root.bind('<Control-v>', lambda event: app.buy())
 
 root.mainloop()

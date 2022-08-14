@@ -9,9 +9,7 @@ ideas de features
 
  - tomar el precio limite en funcion del last
 
- - shortcuts
-
- - paneles paralelos para distintas cryptos
+  - paneles paralelos para distintas cryptos
 
  - cambiar palanca
     client.futures_change_leverage(symbol='BNBUSDT', leverage=1) 
@@ -21,3 +19,4 @@ ideas de features
  - panel de ordenes
     para setear el sl
     
+ - shortcuts
