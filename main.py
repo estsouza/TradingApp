@@ -281,7 +281,7 @@ class Application(Frame):
             timeInForce='GTC')
         elif order_type == 'MARKET':
             market_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type=order_type, quantity=quantity)
-        print(f"{order_type} order placed in {symbol}. Position: {positionSide}, Price: {limit_price}")
+        print(f"{order_type} order placed in {symbol}. Position: {positionSide}, Price: {limit_price} / StopPrice: {stopPrice}")
         #buylimitorder = self.client.futures_create_order(symbol=self.symbol, side=buysell, type='LIMIT', quantity=0.001, price=20000, timeInForce='GTC')
         #print(buylimitorder)
     
