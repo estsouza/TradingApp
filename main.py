@@ -10,7 +10,6 @@ from binance import AsyncClient, BinanceSocketManager
 import keys
 from binance.client import Client
 from binance.enums import *
-import set_order_type
 
 class Application(Frame):
     
@@ -70,9 +69,10 @@ class Application(Frame):
         self.cbSymbol.grid(row=1, column=1, sticky=W)    
 
         #create spinbox (numericUpDown) for Limit Price
-        self.spinQuantity = Spinbox(f1, font=myFont, increment=100, from_=0, to=10000, width=7, textvariable=varQuantity).grid(row=1, column=2)
-
-        #create spinbox (numericUpDown) for Limit Price
+        #self.spinQuantity = Spinbox(f1, font=myFont, increment=100, from_=0, to=10000, width=7, textvariable=varQuantity)
+        self.quantity = Entry(f1, font=myFont, width=7, textvariable=varQuantity)
+        self.quantity.grid(row=1, column=2)
+                #create spinbox (numericUpDown) for Limit Price
         self.spinLimitPrice = Spinbox(f1,font=myFont, format='%10.5f', increment=.01, from_=0.0, to=100000.0, width=10, textvariable=varLimitPrice)
         # when control and up or down arrow are pressed call spenLimitDime()
         #self.spinLimitPrice.bind('<Control-Button-1>', self.spinLimitDime)
@@ -101,6 +101,7 @@ class Application(Frame):
         
         #create textbox(SpinBox) for the Trailing Stop Callback Rate
         self.spCRate = Spinbox(f1, font=myFont, increment=0.1, from_=0.1, to=5, width=6, textvariable=varCallbackRate).grid(row=3, column=2)
+        
 
         #create textbox(SpinBox) for the StopLoss Rate
         self.spStopLoss = Spinbox(f1, font=myFont, increment=0.01, from_=0.01, to=5, width=6, textvariable=varStopLoss).grid(row=3, column=3)
@@ -188,7 +189,7 @@ class Application(Frame):
 
     def cancel_all(self):
         self.client.futures_cancel_all_open_orders(symbol= self.symbol)
-        
+        print("All orders cancelled")
 
     def cbSymbol_onEnter(self, event):
         # cancels Account updates
@@ -291,8 +292,17 @@ class Application(Frame):
         print(f"{order_type} order placed in {symbol}. Position: {positionSide}, Price: {limit_price}")
         #buylimitorder = self.client.futures_create_order(symbol=self.symbol, side=buysell, type='LIMIT', quantity=0.001, price=20000, timeInForce='GTC')
         #print(buylimitorder)
-
     
+    def focus_to_qty(self):
+        self.quantity.focus_set()
+        self.quantity.selection_range(0, END)
+        self.quantity.icursor(END)
+
+    def focus_to_limit_price(self):
+        self.spinLimitPrice.focus_set()
+        self.spinLimitPrice.selection_range(0, END)
+        self.spinLimitPrice.icursor(END)
+
 """
     def server_handler(self, msg):
         if msg.typeName == "nextValidId":
@@ -327,14 +337,19 @@ varCallbackRate = StringVar(root, value='0.1')
 varStopLoss = DoubleVar(root, value='0.1')
 varLast = DoubleVar()
 
+app = Application(root)
+
 # ShortCuts
-#root.bind('<Control-q>', set_order_type.limit)
 root.bind('<q>', lambda event: varOrderType.set('A+T'))
 root.bind('<w>', lambda event: varOrderType.set('ACTIV'))
 root.bind('<e>', lambda event: varOrderType.set('LIMIT'))
 root.bind('<r>', lambda event: varOrderType.set('MARKET'))
 root.bind('<t>', lambda event: varOrderType.set('STP'))
+root.bind('<z>', lambda event: app.cancel_all())
+root.bind('<a>', lambda event: app.focus_to_qty())
+root.bind('<s>', lambda event: app.focus_to_limit_price())
+root.bind('<z>', lambda event: app.cancel_all())
+root.bind('<c>', lambda event: app.sell())
+root.bind('<v>', lambda event: app.buy())
 
-app = Application(root)
-app.bind()
 root.mainloop()
