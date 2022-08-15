@@ -1,10 +1,10 @@
-from warnings import filters
-from binance.client import Client
-import keys
+import tkinter as tk
 
-client = Client(keys.API_KEY, keys.API_SECRET)
+def test(event):
+    print('keysym:', event.keysym)
 
-info = client.get_exchange_info()
-infoMatic= client.get_symbol_info('MATICUSDT')
+root = tk.Tk()
 
-print(infoMatic['filters'][0]['tickSize'])
+root.bind('<Key>', test)
+
+root.mainloop()

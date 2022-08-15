@@ -273,9 +273,10 @@ class Application(Frame):
             timeInForce='GTC')
         elif order_type == 'MARKET':
             market_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type=order_type, quantity=quantity)
-        print(f"{order_type} order placed in {symbol}. Position: {positionSide}, Price: {limit_price} / StopPrice: {stopPrice}")
-        #buylimitorder = self.client.futures_create_order(symbol=self.symbol, side=buysell, type='LIMIT', quantity=0.001, price=20000, timeInForce='GTC')
-        #print(buylimitorder)
+        if not stopPrice:
+            print(f"{order_type} order placed in {symbol}. Position: {positionSide}, Price: {limit_price}")
+        else:
+            print(f"{order_type} order placed in {symbol}. Position: {positionSide}, StopPrice: {stopPrice}")
     
     def focus_to_qty(self):
         self.quantity.focus_set()
@@ -328,16 +329,16 @@ varLast = DoubleVar()
 app = Application(root)
 
 # ShortCuts
-root.bind('<Control-q>', lambda event: varOrderType.set('A+T'))
-root.bind('<Control-w>', lambda event: varOrderType.set('ACTIV'))
-root.bind('<Control-e>', lambda event: varOrderType.set('LIMIT'))
-root.bind('<Control-r>', lambda event: varOrderType.set('MARKET'))
-root.bind('<Control-t>', lambda event: varOrderType.set('STP'))
-root.bind('<Control-a>', lambda event: app.focus_to_qty())
-root.bind('<Control-s>', lambda event: app.focus_to_limit_price())
-root.bind('<Control-z>', lambda event: app.cancel_all())
-root.bind('<Control-c>', lambda event: app.sell())
-root.bind('<Control-v>', lambda event: app.buy())
-root.bind('<Control-x>', lambda event: app.last_to_limit())
+root.bind('<F1>', lambda event: varOrderType.set('A+T'))
+root.bind('<F2>', lambda event: varOrderType.set('ACTIV'))
+root.bind('<F3>', lambda event: varOrderType.set('LIMIT'))
+root.bind('<F4>', lambda event: varOrderType.set('MARKET'))
+root.bind('<F5>', lambda event: varOrderType.set('STP'))
+root.bind('<Control-w>', lambda event: app.focus_to_qty())
+root.bind('<Control-e>', lambda event: app.focus_to_limit_price())
+root.bind('<Control-r>', lambda event: app.cancel_all())
+root.bind('<Control-s>', lambda event: app.sell())
+root.bind('<Control-d>', lambda event: app.buy())
+root.bind('<Control-q>', lambda event: app.last_to_limit())
 
 root.mainloop()
