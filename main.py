@@ -22,6 +22,7 @@ class Application(Frame):
         self.create_widgets()
         self.symbol_id, self.symbol = 0, 'BTCUSDT'
         self.client = None
+        self.stoploss_orders = []
 
     def create_widgets(self):
         """ create the window layout. """
@@ -49,18 +50,14 @@ class Application(Frame):
         self.listbox1.insert(3, 'ETHUSDT')
         self.listbox1.grid(row=0, rowspan=5, column=0, padx=5)
 
-
-        #create Label Symbol
         self.label4 = Label(f1, font=myFont, text="Symbol").grid(row=0, column=1)
-
-        #create Label Quantity
         self.label5 = Label(f1, font=myFont, text="Quantity").grid(row=0, column=2)
-
-        #create Label Limit Price
         self.label6 = Label(f1, font=myFont, text="Limit Price").grid(row=0, column=3)
-
-        #create Limit Market
         self.label7 = Label(f1, font=myFont, text="Market").grid(row=0, column=4)
+        self.label8 = Label(f1, font=myFont, text="OrderType").grid(row=2, column =1, sticky=W)
+        self.label9 = Label(f1, font=myFont, text="Trailing (%)").grid(row=2, column =2)
+        self.labe20 = Label(f1, font=myFont, text="Stop Loss (%)").grid(row=2, column =3)
+        self.labe21 = Label(f1, font=myFont, text="TIF").grid(row=2, column =4)
 
         #create combo box for the Symbol
         self.cbSymbol = ttk.Combobox(f1, font=myFont, width=10, textvariable = varSymbol)
@@ -73,7 +70,7 @@ class Application(Frame):
         #self.spinQuantity = Spinbox(f1, font=myFont, increment=100, from_=0, to=10000, width=7, textvariable=varQuantity)
         self.quantity = Entry(f1, font=myFont, width=7, textvariable=varQuantity)
         self.quantity.grid(row=1, column=2)
-                #create spinbox (numericUpDown) for Limit Price
+        #create spinbox (numericUpDown) for Limit Price
         self.spinLimitPrice = Spinbox(f1,font=myFont, format='%10.5f', increment=.01, from_=0.0, to=100000.0, width=10, textvariable=varLimitPrice)
         # when control and up or down arrow are pressed call spenLimitDime()
         #self.spinLimitPrice.bind('<Control-Button-1>', self.spinLimitDime)
@@ -81,29 +78,14 @@ class Application(Frame):
         #self.spinLimitPrice.bind('<Alt-Button-1>', self.spinLimitPenny) 
         self.spinLimitPrice.grid(row=1, column=3)
 
-        """        
-        #create textbox(Entry box) for the Market
-        self.cbMarket = ttk.Combobox(f1, font=myFont, width=7, textvariable=varMarket).grid(row=1, column=4, sticky = W)
-        """
-
-        
-        self.label8 = Label(f1, font=myFont, text="OrderType").grid(row=2, column =1, sticky=W)
-        self.label9 = Label(f1, font=myFont, text="Trailing (%)").grid(row=2, column =2)
-        self.labe20 = Label(f1, font=myFont, text="Stop Loss (%)").grid(row=2, column =3)
-
-        #create Label Time in Force
-        self.labe21 = Label(f1, font=myFont, text="TIF").grid(row=2, column =4)
-
         #create textbox(Entry box) for the Order Type ****4****
         self.cbOrderType = ttk.Combobox(f1, font=myFont, width=6, textvariable=varOrderType)
         self.cbOrderType['values'] = ('A+T','ACTIV', 'LIMIT','MARKET', 'STP') 
         self.cbOrderType.grid(row=3, column =1,sticky = W)
-        
-        
+                
         #create textbox(SpinBox) for the Trailing Stop Callback Rate
         self.spCRate = Spinbox(f1, font=myFont, increment=0.1, from_=0.1, to=5, width=6, textvariable=varCallbackRate).grid(row=3, column=2)
         
-
         #create textbox(SpinBox) for the StopLoss Rate
         self.spStopLoss = Spinbox(f1, font=myFont, increment=0.01, from_=0.01, to=5, width=6, textvariable=varStopLoss).grid(row=3, column=3)
         """
@@ -118,7 +100,6 @@ class Application(Frame):
         """
         #create Bid Label
         self.label2 = Label(f1, font=myFont, text="Bid", width=7).grid(row=4, column=2)
-
         #create Ask Label
         self.label3 = Label(f1, font=myFont, text="Ask", width=7).grid(row=4, column=3)
         
@@ -145,14 +126,14 @@ class Application(Frame):
         self.label1 = Label(f1, font=myFont, width=8, text="Last").grid(row=6, column =1)
 
         #create textbox(Entry box) for the last price 
-        self.tbLast = Entry(f1, font=myFont, width=10, textvariable = varLast).grid(row=6, column =2,sticky = W)
+        self.tbLast = Entry(f1, font=myFont, width=10, textvariable = varLast)
+        self.tbLast.grid(row=6, column =2,sticky = W)
+        self.tbLast.bind("<Button-1>", self.last_to_limit)
 
         # create button for Cancell All
         self.btnCancelAll = Button(f1, font= ('Lucida Grande', 10), text= 'Cancel All',
                                 width=8, bg="grey", fg="white", command=self.cancel_all)
         self.btnCancelAll.grid(row=7, column=2)
-
-    
 
     def check_connection(self):
         try:
@@ -166,7 +147,6 @@ class Application(Frame):
         # initialize the client
         self.client = Client(keys.API_KEY, keys.API_SECRET, tld='com')
         self.check_connection()
-        
         
     def disconnect_it(self):
         self.client = None
@@ -190,6 +170,7 @@ class Application(Frame):
 
     def cancel_all(self):
         self.client.futures_cancel_all_open_orders(symbol= self.symbol)
+        self.stoploss_orders = []
         print("All orders cancelled")
 
     def cbSymbol_onEnter(self, event):
@@ -271,7 +252,22 @@ class Application(Frame):
                 stopPrice = round(varLast.get()*(1-varStopLoss.get()/100),tickround)
             else:
                 stopPrice = round(varLast.get()*(1+varStopLoss.get()/100),tickround)
+            """for i in range(len(self.stoploss_orders)):
+                if symbol == self.stoploss_orders[i]['symbol'] and positionSide == self.stoploss_orders[i]['positionSide']:
+                    #chequear si el stopLoss es mejor
+                    #cncelar orden anterior
+                    #result = self.client.cancel_order(symbol=symbol, orderId=sl['orderId'], origClientOrderId=client_order_id, timestamp=true)
+                    self.client.futures_cancel_order(symbol=symbol, orderId=self.stoploss_orders[i]['orderId'])
+                    #eliminar el dict de la lista
+                    self.stoploss_orders.remove(i)"""
+            for sl in self.stoploss_orders:
+                if symbol == sl['symbol'] and positionSide == sl['positionSide']:
+                    #chequear si el stopLoss es mejor
+                    self.client.futures_cancel_order(symbol=symbol, orderId=sl['orderId'])
+                    self.stoploss_orders.remove(sl)
             sl_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide=positionSide, type='STOP_MARKET', stopPrice=stopPrice, closePosition=True)
+            self.stoploss_orders.append({'symbol': symbol, 'positionSide': positionSide, 'stopPrice': stopPrice, 'orderId': sl_order.get('orderId')})
+            print(self.stoploss_orders)
         elif order_type == 'A+T':
             activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price)
             trailing_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide= positionSide, type='TRAILING_STOP_MARKET', quantity=quantity, activationPrice= limit_price, callbackRate=varCallbackRate.get(), timeInForce='GTC')
@@ -294,6 +290,10 @@ class Application(Frame):
         self.spinLimitPrice.focus_set()
         self.spinLimitPrice.selection_range(0, END)
         self.spinLimitPrice.icursor(END)
+
+    def last_to_limit(self, event=None):
+        varLimitPrice.set(varLast.get())
+        self.focus_to_limit_price()
 
 """
     def server_handler(self, msg):
@@ -342,5 +342,6 @@ root.bind('<Control-s>', lambda event: app.focus_to_limit_price())
 root.bind('<Control-z>', lambda event: app.cancel_all())
 root.bind('<Control-c>', lambda event: app.sell())
 root.bind('<Control-v>', lambda event: app.buy())
+root.bind('<Control-x>', lambda event: app.last_to_limit())
 
 root.mainloop()
