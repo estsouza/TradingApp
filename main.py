@@ -11,6 +11,7 @@ import keys
 from binance.client import Client
 from binance.enums import *
 import math
+import time
 
 class Application(Frame):
     
@@ -226,14 +227,16 @@ class Application(Frame):
         except:
             self.check_connection()
 
-    """
-    def request_account_updates(self, account_code):  
-        self.tws_conn.reqAccountUpdates(True, self.account_code)
-    """
+    def cancel_order(self, symbol, orderId):
+        try:
+            time.sleep(0.5)
+            self.client.futures_cancel_order(symbol=symbol, orderId=orderId)
+        except:
+            print("Error in cancelling order")
+
     def cancel_market_data(self):
         try:
             self.ws.close()
-
         except:
             pass
     
@@ -252,18 +255,11 @@ class Application(Frame):
                 stopPrice = round(varLast.get()*(1-varStopLoss.get()/100),tickround)
             else:
                 stopPrice = round(varLast.get()*(1+varStopLoss.get()/100),tickround)
-            """for i in range(len(self.stoploss_orders)):
-                if symbol == self.stoploss_orders[i]['symbol'] and positionSide == self.stoploss_orders[i]['positionSide']:
-                    #chequear si el stopLoss es mejor
-                    #cncelar orden anterior
-                    #result = self.client.cancel_order(symbol=symbol, orderId=sl['orderId'], origClientOrderId=client_order_id, timestamp=true)
-                    self.client.futures_cancel_order(symbol=symbol, orderId=self.stoploss_orders[i]['orderId'])
-                    #eliminar el dict de la lista
-                    self.stoploss_orders.remove(i)"""
             for sl in self.stoploss_orders:
                 if symbol == sl['symbol'] and positionSide == sl['positionSide']:
                     #chequear si el stopLoss es mejor
-                    self.client.futures_cancel_order(symbol=symbol, orderId=sl['orderId'])
+                    threading.Thread(target=self.cancel_order, args=[symbol, sl['orderId']]).start()
+                    #self.client.futures_cancel_order(symbol=symbol, orderId=sl['orderId'])
                     self.stoploss_orders.remove(sl)
             sl_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide=positionSide, type='STOP_MARKET', stopPrice=stopPrice, closePosition=True)
             self.stoploss_orders.append({'symbol': symbol, 'positionSide': positionSide, 'stopPrice': stopPrice, 'orderId': sl_order.get('orderId')})
