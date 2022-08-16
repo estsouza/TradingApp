@@ -265,7 +265,7 @@ class Application(Frame):
             self.stoploss_orders.append({'symbol': symbol, 'positionSide': positionSide, 'stopPrice': stopPrice, 'orderId': sl_order.get('orderId')})
             print(self.stoploss_orders)
         elif order_type == 'A+T':
-            activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price)
+            activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price, closePosition=False)
             trailing_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide= positionSide, type='TRAILING_STOP_MARKET', quantity=quantity, activationPrice= limit_price, callbackRate=varCallbackRate.get(), timeInForce='GTC')
             """sl_order = self.client.futures_create_order(symbol=symbol, side='SELL', positionSide=positionSide, type='STOP_MARKET', stopPrice='{:.8f}'.format(round(float(limit_price)*0.998,8)), closePosition=True, timeInForce='GTE_GTC')"""
         elif order_type == 'LIMIT':
@@ -273,11 +273,11 @@ class Application(Frame):
             timeInForce='GTC')
         elif order_type == 'MARKET':
             market_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type=order_type, quantity=quantity)
-        if not stopPrice:
-            print(f"{order_type} order placed in {symbol}. Position: {positionSide}, Price: {limit_price}")
-        else:
+        try:
             print(f"{order_type} order placed in {symbol}. Position: {positionSide}, StopPrice: {stopPrice}")
-    
+        except:    
+            print(f"{order_type} order placed in {symbol}. Position: {positionSide}, Price: {limit_price}")
+        
     def focus_to_qty(self):
         self.quantity.focus_set()
         self.quantity.selection_range(0, END)

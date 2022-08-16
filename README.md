@@ -2,12 +2,11 @@
 
 features pendientes
 
- - Subir SL a dist% fija (ej: -0.05%)
-   cancelar el anterior
+ - Poner SL cuando se abre una posicion
+
+ - Opcion de poner nuevo SL solo si mejora el precio
 
  - restringir campos de texto a float
-
- - tomar el precio limite en funcion del last
 
  - paneles paralelos para distintas cryptos
 
@@ -18,5 +17,3 @@ features pendientes
 
  - panel de ordenes
     para setear el sl
-    
- - shortcuts
