@@ -224,6 +224,7 @@ class Application(Frame):
         try:
             request = self.client.get_symbol_info(self.symbol)
             self.ticksize = float((request['filters'][0]['tickSize']))
+            self.tickround = int(math.log10(self.ticksize)*-1)
         except:
             self.check_connection()
 
@@ -241,7 +242,6 @@ class Application(Frame):
             pass
     
     def place_order(self, symbol, quantity, order_type, is_buy, limit_price):
-        tickround = int(math.log10(self.ticksize)*-1)
         if is_buy == True:
             orderSide = 'BUY'
             slSide = 'SELL'
@@ -251,33 +251,33 @@ class Application(Frame):
             slSide = 'BUY'
             positionSide= 'SHORT'
         if order_type == 'STP':
-            if positionSide == 'LONG':
-                stopPrice = round(varLast.get()*(1-varStopLoss.get()/100),tickround)
-            else:
-                stopPrice = round(varLast.get()*(1+varStopLoss.get()/100),tickround)
-            for sl in self.stoploss_orders:
-                if symbol == sl['symbol'] and positionSide == sl['positionSide']:
-                    #chequear si el stopLoss es mejor
-                    threading.Thread(target=self.cancel_order, args=[symbol, sl['orderId']]).start()
-                    #self.client.futures_cancel_order(symbol=symbol, orderId=sl['orderId'])
-                    self.stoploss_orders.remove(sl)
-            sl_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide=positionSide, type='STOP_MARKET', stopPrice=stopPrice, closePosition=True)
-            self.stoploss_orders.append({'symbol': symbol, 'positionSide': positionSide, 'stopPrice': stopPrice, 'orderId': sl_order.get('orderId')})
-            print(self.stoploss_orders)
+            self.place_stoploss_order(positionSide=positionSide)
         elif order_type == 'A+T':
-            activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price, closePosition=False)
+            activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price)
             trailing_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide= positionSide, type='TRAILING_STOP_MARKET', quantity=quantity, activationPrice= limit_price, callbackRate=varCallbackRate.get(), timeInForce='GTC')
-            """sl_order = self.client.futures_create_order(symbol=symbol, side='SELL', positionSide=positionSide, type='STOP_MARKET', stopPrice='{:.8f}'.format(round(float(limit_price)*0.998,8)), closePosition=True, timeInForce='GTE_GTC')"""
         elif order_type == 'LIMIT':
             limitorder = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type=order_type, quantity=quantity,price=limit_price, 
             timeInForce='GTC')
         elif order_type == 'MARKET':
             market_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type=order_type, quantity=quantity)
-        try:
-            print(f"{order_type} order placed in {symbol}. Position: {positionSide}, StopPrice: {stopPrice}")
-        except:    
-            print(f"{order_type} order placed in {symbol}. Position: {positionSide}, Price: {limit_price}")
-        
+                
+    def place_stoploss_order(self, positionSide):
+        symbol = varSymbol.get()
+        if positionSide == 'LONG':
+            stopPrice = round(varLast.get()*(1-varStopLoss.get()/100),self.tickround)
+            slSide = 'SELL'
+        else:
+            stopPrice = round(varLast.get()*(1+varStopLoss.get()/100),self.tickround)
+            slSide = 'BUY'
+        for sl in self.stoploss_orders:
+            if symbol == sl['symbol'] and positionSide == sl['positionSide']:
+                #chequear si el stopLoss es mejor
+                threading.Thread(target=self.cancel_order, args=[symbol, sl['orderId']]).start()
+                self.stoploss_orders.remove(sl)
+        sl_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide=positionSide, type='STOP_MARKET', stopPrice=stopPrice, closePosition=True)
+        self.stoploss_orders.append({'symbol': symbol, 'positionSide': positionSide, 'stopPrice': stopPrice, 'orderId': sl_order.get('orderId')})
+        print(f"StopLoss order placed in {symbol}. Position: {positionSide}, StopPrice: {stopPrice}")
+
     def focus_to_qty(self):
         self.quantity.focus_set()
         self.quantity.selection_range(0, END)
@@ -291,7 +291,7 @@ class Application(Frame):
     def last_to_limit(self, event=None):
         varLimitPrice.set(varLast.get())
         self.focus_to_limit_price()
-
+        
 """
     def server_handler(self, msg):
         if msg.typeName == "nextValidId":
@@ -339,6 +339,7 @@ root.bind('<Control-e>', lambda event: app.focus_to_limit_price())
 root.bind('<Control-r>', lambda event: app.cancel_all())
 root.bind('<Control-s>', lambda event: app.sell())
 root.bind('<Control-d>', lambda event: app.buy())
-root.bind('<Control-q>', lambda event: app.last_to_limit())
+root.bind('<Control-o>', lambda event: app.place_stoploss_order(positionSide='SHORT'))
+root.bind('<Control-p>', lambda event: app.place_stoploss_order(positionSide='LONG'))
 
 root.mainloop()
