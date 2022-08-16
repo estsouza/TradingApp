@@ -153,22 +153,6 @@ class Application(Frame):
         self.client = None
         self.check_connection()
 
-    def buy(self):
-        self.symbol = varSymbol.get()  # gets the symbol string from the symbol combo box
-        self.quantity = varQuantity.get()  # gets the share size from the quantity spinbox
-        self.order_type = varOrderType.get()  # gets the order type for the order type combobox
-        self.limit_price = varLimitPrice.get()  # gets the limit price from the limit price spinbox
-        # calls the function place_market order passes variables
-        # symbol, quantity, order type, buy or sell represeted by true or false, and limit price
-        self.place_order(self.symbol, self.quantity, self.order_type, True, self.limit_price)
-    
-    def sell(self):
-        self.symbol = varSymbol.get()
-        self.quantity = varQuantity.get()
-        self.order_type = varOrderType.get()
-        self.limit_price = varLimitPrice.get()
-        self.place_order(self.symbol, self.quantity, self.order_type, False, self.limit_price)
-
     def cancel_all(self):
         self.client.futures_cancel_all_open_orders(symbol= self.symbol)
         self.stoploss_orders = []
@@ -240,6 +224,20 @@ class Application(Frame):
             self.ws.close()
         except:
             pass
+
+    def buy(self):
+        self.symbol = varSymbol.get()  # gets the symbol string from the symbol combo box
+        self.quantity = float(varQuantity.get())  # gets the share size from the quantity spinbox
+        self.order_type = varOrderType.get()  # gets the order type for the order type combobox
+        self.limit_price = float(varLimitPrice.get())  # gets the limit price from the limit price spinbox
+        self.place_order(self.symbol, self.quantity, self.order_type, True, self.limit_price)
+    
+    def sell(self):
+        self.symbol = varSymbol.get()
+        self.quantity = float(varQuantity.get())
+        self.order_type = varOrderType.get()
+        self.limit_price = float(varLimitPrice.get())
+        self.place_order(self.symbol, self.quantity, self.order_type, False, self.limit_price)
     
     def place_order(self, symbol, quantity, order_type, is_buy, limit_price):
         if is_buy == True:
@@ -253,6 +251,7 @@ class Application(Frame):
         if order_type == 'STP':
             self.place_stoploss_order(positionSide=positionSide)
         elif order_type == 'A+T':
+            print(f"symbol={symbol}, side={orderSide}, positionSide={positionSide}, type='STOP_MARKET',  quantity={quantity},limitPrice={limit_price}")
             activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price)
             trailing_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide= positionSide, type='TRAILING_STOP_MARKET', quantity=quantity, activationPrice= limit_price, callbackRate=varCallbackRate.get(), timeInForce='GTC')
         elif order_type == 'LIMIT':
@@ -260,6 +259,7 @@ class Application(Frame):
             timeInForce='GTC')
         elif order_type == 'MARKET':
             market_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type=order_type, quantity=quantity)
+        print(f"StopLoss order placed in {symbol}. Position: {positionSide}, Price: {limit_price}")
                 
     def place_stoploss_order(self, positionSide):
         symbol = varSymbol.get()
@@ -320,7 +320,7 @@ root.geometry('600x480')
 root.attributes('-topmost', True)
 varSymbol = StringVar(root, value='BTCUSDT')
 varQuantity = StringVar(root, value='100')
-varLimitPrice = StringVar()
+varLimitPrice = StringVar(root, value='1')
 varOrderType = StringVar(root, value='A+T')
 varCallbackRate = StringVar(root, value='0.1')
 varStopLoss = DoubleVar(root, value='0.1')

@@ -4,7 +4,6 @@ features pendientes
 
  - Poner SL cuando se abre una posicion
  - Cancelar Trailing si SL?
- - shortcut para Sl sin cambiar tipo de orden
  - eliminar trailng colgados
 
  - Opcion de poner nuevo SL solo si mejora el precio
