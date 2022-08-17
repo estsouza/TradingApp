@@ -85,7 +85,7 @@ class Application(Frame):
 
         #create textbox(Entry box) for the Order Type ****4****
         self.cbOrderType = ttk.Combobox(f1, font=myFont, width=6, textvariable=varOrderType)
-        self.cbOrderType['values'] = ('A+T','ACTIV', 'LIMIT','MARKET', 'STP') 
+        self.cbOrderType['values'] = ('ACTIV', 'LIMIT','MARKET', 'STP') 
         self.cbOrderType.grid(row=1, column =4)
                 
         #create textbox(SpinBox) for the Trailing Stop Callback Rate
@@ -258,16 +258,19 @@ class Application(Frame):
             positionSide= 'SHORT'
         if order_type == 'STP':
             self.place_stoploss_order(positionSide=positionSide)
-        elif order_type == 'A+T':
+        elif order_type == 'ACTIV':
             print(f"symbol={symbol}, side={orderSide}, positionSide={positionSide}, type='STOP_MARKET',  quantity={quantity},limitPrice={limit_price}")
             activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price)
-            trailing_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide= positionSide, type='TRAILING_STOP_MARKET', quantity=quantity, activationPrice= limit_price, callbackRate=varCallbackRate.get(), timeInForce='GTC')
         elif order_type == 'LIMIT':
             limitorder = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type=order_type, quantity=quantity,price=limit_price, 
             timeInForce='GTC')
         elif order_type == 'MARKET':
             market_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type=order_type, quantity=quantity)
+            limit_price = varLast.get()
         print(f"StopLoss order placed in {symbol}. Position: {positionSide}, Price: {limit_price}")
+        if self.trailing_enabled.get():
+            trailing_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide= positionSide, type='TRAILING_STOP_MARKET', quantity=quantity, activationPrice= limit_price, callbackRate=varCallbackRate.get(), timeInForce='GTC')
+            print("Trailing order placed")     
                 
     def place_stoploss_order(self, positionSide):
         symbol = varSymbol.get()
@@ -329,7 +332,7 @@ root.attributes('-topmost', True)
 varSymbol = StringVar(root, value='BTCUSDT')
 varQuantity = StringVar(root, value='100')
 varLimitPrice = StringVar(root, value='1')
-varOrderType = StringVar(root, value='A+T')
+varOrderType = StringVar(root, value='ACTIV')
 varCallbackRate = StringVar(root, value='0.1')
 varStopLoss = DoubleVar(root, value='0.1')
 varLast = DoubleVar()
@@ -337,7 +340,6 @@ varLast = DoubleVar()
 app = Application(root)
 
 # ShortCuts
-root.bind('<F1>', lambda event: varOrderType.set('A+T'))
 root.bind('<F2>', lambda event: varOrderType.set('ACTIV'))
 root.bind('<F3>', lambda event: varOrderType.set('LIMIT'))
 root.bind('<F4>', lambda event: varOrderType.set('MARKET'))
