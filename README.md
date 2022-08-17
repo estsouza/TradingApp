@@ -16,6 +16,8 @@ features pendientes
 
  - cambiar palanca
     client.futures_change_leverage(symbol='BNBUSDT', leverage=1) 
+    
+ - Calcular size en funcion de margin y palanca
 
  - panel de posiciones abiertas
 

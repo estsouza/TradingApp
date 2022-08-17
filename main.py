@@ -1,3 +1,4 @@
+import tkinter
 from ib.ext.Contract import Contract
 from ib.ext.Order import Order
 from ib.opt import Connection, message
@@ -57,11 +58,11 @@ class Application(Frame):
         self.label4 = Label(f1, font=myFont, text="Symbol").grid(row=0, column=1)
         self.label5 = Label(f1, font=myFont, text="Quantity").grid(row=0, column=2)
         self.label6 = Label(f1, font=myFont, text="Limit Price").grid(row=0, column=3)
-        self.label7 = Label(f1, font=myFont, text="Market").grid(row=0, column=4)
-        self.label8 = Label(f1, font=myFont, text="OrderType").grid(row=2, column =1, sticky=W)
+        self.label7 = Label(f1, font=myFont, text="Order Type").grid(row=0, column=4)
+        self.label8 = Label(f1, font=myFont, text="").grid(row=2, column =1, sticky=W)
         self.label9 = Label(f1, font=myFont, text="Trailing (%)").grid(row=2, column =2)
-        self.labe20 = Label(f1, font=myFont, text="Stop Loss (%)").grid(row=2, column =3)
-        self.labe21 = Label(f1, font=myFont, text="TIF").grid(row=2, column =4)
+        self.labe20 = Label(f1, font=myFont, text="").grid(row=2, column =3)
+        self.labe21 = Label(f1, font=myFont, text="Stop Loss (%)").grid(row=2, column =4)
 
         #create combo box for the Symbol
         self.cbSymbol = ttk.Combobox(f1, font=myFont, width=10, textvariable = varSymbol)
@@ -85,13 +86,19 @@ class Application(Frame):
         #create textbox(Entry box) for the Order Type ****4****
         self.cbOrderType = ttk.Combobox(f1, font=myFont, width=6, textvariable=varOrderType)
         self.cbOrderType['values'] = ('A+T','ACTIV', 'LIMIT','MARKET', 'STP') 
-        self.cbOrderType.grid(row=3, column =1,sticky = W)
+        self.cbOrderType.grid(row=1, column =4)
                 
         #create textbox(SpinBox) for the Trailing Stop Callback Rate
+        self.trailing_enabled = tkinter.BooleanVar(self)
+        self.chboxTrailingStop = ttk.Checkbutton(f1, text="Trailing Stop", variable=self.trailing_enabled)
+        self.chboxTrailingStop.grid(row=3, column=1)
         self.spCRate = Spinbox(f1, font=myFont, increment=0.1, from_=0.1, to=5, width=6, textvariable=varCallbackRate).grid(row=3, column=2)
         
         #create textbox(SpinBox) for the StopLoss Rate
-        self.spStopLoss = Spinbox(f1, font=myFont, increment=0.01, from_=0.01, to=5, width=6, textvariable=varStopLoss).grid(row=3, column=3)
+        self.stopLoss_enabled = tkinter.BooleanVar(self)
+        self.chboxStopLoss = ttk.Checkbutton(f1, text="Stop Loss", variable=self.stopLoss_enabled)
+        self.chboxStopLoss.grid(row=3, column=3)
+        self.spStopLoss = Spinbox(f1, font=myFont, increment=0.01, from_=0.01, to=5, width=6, textvariable=varStopLoss).grid(row=3, column=4)
         """
         #create textbox(Entry box) for the Primary Exchange
         self.tbPrimaryEx = Entry(f1, font=myFont, width=8, textvariable=varPrimaryEx).grid(row=3, column =3,sticky = W)
