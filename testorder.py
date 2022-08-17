@@ -1,52 +1,70 @@
-symbol=GMTUSDT, side=BUY, positionSide=LONG, type='STOP_MARKET',  quantity=100,stopPrice=1.09
+from binance.client import Client
+import websocket
+import json
+import keys
+import requests
 
-symbol=GMTUSDT, side=BUY, positionSide=LONG, type='STOP_MARKET',  quantity=100,stopPrice=   1.0420
+client = Client(keys.API_KEY, keys.API_SECRET, tld='com')
+
+positionSide = 'LONG'
+stopLoss = 1.036
+takeProfit = 1.048
+symbol = 'GMTUSDT'
+side = 'BUY'
+slSide = 'SELL'
+lastPrice = 1.03
+
+def get_listen_key_by_REST(binance_api_key):
+    url = 'https://fapi.binance.com/fapi/v1/listenKey'
+    response = requests.post(url, headers={'X-MBX-APIKEY': binance_api_key}) 
+    json = response.json()
+    return json['listenKey']
+
+listenKey = get_listen_key_by_REST(keys.API_KEY)
+
+def on_message(ws, message):
+    json_message = json.loads(message)
+    positionSide = json_message['o']['ps']
+    side = json_message['o']['S']
+    state = json_message['o']['X']
+    if state == 'FILLED' and ((side == 'BUY' and positionSide == 'LONG') or (side == 'SELL' and positionSide == 'SHORT')):
+        print(f"side: {side}, positionSide: {positionSide}, state: {state}")
+        place_stoploss_order(positionSide)
 
 
-logged in
-symbol=GMTUSDT, side=BUY, positionSide=LONG, type='STOP_MARKET',  quantity=100,limitPrice=   1.089
-Exception in Tkinter callback
-Traceback (most recent call last):
-  File "C:\Users\estso\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
-    return self.func(*args)
-  File "c:\Users\estso\Documents\Python Scripts\TradingApp\TradingApp\main.py", line 343, in <lambda>
-    root.bind('<Control-d>', lambda event: app.buy())
-  File "c:\Users\estso\Documents\Python Scripts\TradingApp\TradingApp\main.py", line 163, in buy
-    self.place_order(self.symbol, self.quantity, self.order_type, True, self.limit_price)
-  File "c:\Users\estso\Documents\Python Scripts\TradingApp\TradingApp\main.py", line 257, in place_order
-    activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price)
-  File "C:\Users\estso\AppData\Local\Programs\Python\Python310\lib\site-packages\binance\client.py", line 5985, in futures_create_order
-    return self._request_futures_api('post', 'order', True, data=params)
-  File "C:\Users\estso\AppData\Local\Programs\Python\Python310\lib\site-packages\binance\client.py", line 339, in _request_futures_api
-    return self._request(method, uri, signed, True, **kwargs)
-  File "C:\Users\estso\AppData\Local\Programs\Python\Python310\lib\site-packages\binance\client.py", line 315, in _request
-    return self._handle_response(self.response)
-  File "C:\Users\estso\AppData\Local\Programs\Python\Python310\lib\site-packages\binance\client.py", line 324, in _handle_response
-    raise BinanceAPIException(response, response.status_code, response.text)
-binance.exceptions.BinanceAPIException: APIError(code=-1022): Signature for this request is not valid.
-symbol=GMTUSDT, side=BUY, positionSide=LONG, type='STOP_MARKET',  quantity=100,limitPrice=.089
-Exception in Tkinter callback
-Traceback (most recent call last):
-  File "C:\Users\estso\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
-    return self.func(*args)
-  File "c:\Users\estso\Documents\Python Scripts\TradingApp\TradingApp\main.py", line 343, in <lambda>
-    root.bind('<Control-d>', lambda event: app.buy())
-  File "c:\Users\estso\Documents\Python Scripts\TradingApp\TradingApp\main.py", line 163, in buy
-    self.place_order(self.symbol, self.quantity, self.order_type, True, self.limit_price)
-  File "c:\Users\estso\Documents\Python Scripts\TradingApp\TradingApp\main.py", line 257, in place_order
-    activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price)
-  File "C:\Users\estso\AppData\Local\Programs\Python\Python310\lib\site-packages\binance\client.py", line 5985, in futures_create_order
-    return self._request_futures_api('post', 'order', True, data=params)
-  File "C:\Users\estso\AppData\Local\Programs\Python\Python310\lib\site-packages\binance\client.py", line 339, in _request_futures_api
-    return self._request(method, uri, signed, True, **kwargs)
-  File "C:\Users\estso\AppData\Local\Programs\Python\Python310\lib\site-packages\binance\client.py", line 315, in _request
-    return self._handle_response(self.response)
-  File "C:\Users\estso\AppData\Local\Programs\Python\Python310\lib\site-packages\binance\client.py", line 324, in _handle_response
-    raise BinanceAPIException(response, response.status_code, response.text)
-binance.exceptions.BinanceAPIException: APIError(code=-1102): Mandatory parameter 'stopPrice' was not sent, was empty/null, or malformed.
-symbol=GMTUSDT, side=BUY, positionSide=LONG, type='STOP_MARKET',  quantity=100,limitPrice=1089
-StopLoss order placed in GMTUSDT. Position: LONG, Price: 1089
-symbol=GMTUSDT, side=BUY, positionSide=LONG, type='STOP_MARKET',  quantity=100,limitPrice=1.89
-StopLoss order placed in GMTUSDT. Position: LONG, Price: 1.89
-symbol=GMTUSDT, side=BUY, positionSide=LONG, type='STOP_MARKET',  quantity=100,limitPrice=1.09
-StopLoss order placed in GMTUSDT. Position: LONG, Price: 1.09
+    #print(json_message)
+        
+def on_error(ws, error):
+    print(error)
+
+def on_close(close_msg):
+    print("### closed ###" + close_msg)
+
+def streamUserdata():
+    websocket.enableTrace(False)
+    socket = f'wss://fstream.binance.com/ws/{listenKey}'
+    ws = websocket.WebSocketApp(socket,on_message=on_message,on_error=on_error,on_close=on_close)
+        
+    ws.run_forever()
+
+def place_stoploss_order(positionSide):
+    print("pedido de SL")
+    if positionSide == 'LONG':
+        stopPrice = 1.015
+        slSide = 'SELL'
+    else:
+        stopPrice = 1.03
+        slSide = 'BUY'
+    """for sl in self.stoploss_orders:
+            if symbol == sl['symbol'] and positionSide == sl['positionSide']:
+                #chequear si el stopLoss es mejor
+                threading.Thread(target=self.cancel_order, args=[symbol, sl['orderId']]).start()
+                self.stoploss_orders.remove(sl)"""
+    sl_order = client.futures_create_order(symbol=symbol, side=slSide, positionSide=positionSide, type='STOP_MARKET', stopPrice=stopPrice, closePosition=True)
+        #self.stoploss_orders.append({'symbol': symbol, 'positionSide': positionSide, 'stopPrice': stopPrice, 'orderId': sl_order.get('orderId')})
+    print(f"StopLoss order placed in {symbol}. Position: {positionSide}, StopPrice: {stopPrice}")
+
+streamUserdata()
+
+
+

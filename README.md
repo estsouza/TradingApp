@@ -2,11 +2,13 @@
 
 features pendientes
 
- - Poner SL cuando se abre una posicion
+ - poner casilla de activar SL y trailing
  - Cancelar Trailing si SL?
  - eliminar trailng colgados
 
  - Opcion de poner nuevo SL solo si mejora el precio
+
+ - batch orders
 
  - restringir campos de texto a float
 

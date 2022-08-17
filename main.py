@@ -24,7 +24,7 @@ class Application(Frame):
         self.symbol_id, self.symbol = 0, 'BTCUSDT'
         self.client = None
         self.stoploss_orders = []
-
+        
     def create_widgets(self):
         """ create the window layout. """
 
@@ -44,9 +44,12 @@ class Application(Frame):
         n.grid(row=3, column=0, padx=5, pady=5, sticky=W)
         
         #create listbox
+        self.symbols = []
+        self.symbols.append({'symbol':'GMTUSDT', 'quantity': 2000, 'limitPrice': 1.1})
+        self.symbols.append({'symbol':'UNFIUSDT', 'quantity': 300, 'limitPrice': 11})
         self.listbox1 = Listbox(f1, font=('Lucida Grande', 9), width=7)
         #self.listbox1.bind('<Double-Button-1>', self.OnDoubleClick_listbox)
-        self.listbox1.insert(1, 'SOLUSDT')
+        self.listbox1.insert(1, 'GMTUSDT')
         self.listbox1.insert(2, 'BTCUSDT')
         self.listbox1.insert(3, 'ETHUSDT')
         self.listbox1.grid(row=0, rowspan=5, column=0, padx=5)
@@ -179,9 +182,7 @@ class Application(Frame):
         #self.request_account_updates(self.account_code)
             
     def request_market_data(self, symbol):
-
         def on_message(ws, message):
-            
             json_message = json.loads(message)
             varLast.set(json_message['k']['c']) 
         
