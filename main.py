@@ -7,6 +7,7 @@ from tkinter import ttk
 import threading
 import websocket
 import json
+import requests
 from binance import AsyncClient, BinanceSocketManager
 import keys
 from binance.client import Client
@@ -97,17 +98,10 @@ class Application(Frame):
         #create textbox(SpinBox) for the StopLoss Rate
         self.stopLoss_enabled = tkinter.BooleanVar(self)
         self.chboxStopLoss = ttk.Checkbutton(f1, text="Stop Loss", variable=self.stopLoss_enabled)
+        self.stopLoss_enabled.set(True)
         self.chboxStopLoss.grid(row=3, column=3)
         self.spStopLoss = Spinbox(f1, font=myFont, increment=0.01, from_=0.01, to=5, width=6, textvariable=varStopLoss).grid(row=3, column=4)
-        """
-        #create textbox(Entry box) for the Primary Exchange
-        self.tbPrimaryEx = Entry(f1, font=myFont, width=8, textvariable=varPrimaryEx).grid(row=3, column =3,sticky = W)
-
-        #create textbox(Entry box) for the Time in Force
-        self.cbTIF = ttk.Combobox(f1, font=myFont, width=7, textvariable=varTIF)
-        self.cbTIF['values'] = ('DAY','GTC')
-        self.cbTIF.grid(row=3, column =4,sticky = W)
-        """
+        
         """
         #create Bid Label
         self.label2 = Label(f1, font=myFont, text="Bid", width=7).grid(row=4, column=2)
@@ -124,7 +118,6 @@ class Application(Frame):
         #self.tbAsk.bind("<Button-1>", self.tbAsk_Click)
         self.tbAsk.grid(row=5, column=3)
         """
-
         #create a sell button ***
         self.btnSell = Button(f1, font=('Lucida Grande',10,'bold'), text="SHORT", width=9, bg="red", fg="white", command=self.sell)
         self.btnSell.grid(row=5, column=1, sticky=W)
@@ -153,15 +146,54 @@ class Application(Frame):
                 print("logged in")
         except:
             print("logged out")
-
+    
+    def get_listenKey(self, binance_api_key):
+        url = 'https://fapi.binance.com/fapi/v1/listenKey'
+        response = requests.post(url, headers={'X-MBX-APIKEY': binance_api_key}) 
+        try:
+            json = response.json()
+            print('listenKey obtained')
+            return json['listenKey']
+        except:
+            print('Error in getting listenKey')
+        
     def connect_to_binance(self):
         # initialize the client
         self.client = Client(keys.API_KEY, keys.API_SECRET, tld='com')
         self.check_connection()
+        self.listenKey = self.get_listenKey(keys.API_KEY)
+        threading.Thread(target=self.request_user_data, args=[self.listenKey]).start()
         
     def disconnect_it(self):
         self.client = None
         self.check_connection()
+
+    def request_user_data(self, listenKey):
+        def on_message(ws, message):
+            json_message = json.loads(message)
+            symbol = json_message['o']['s']
+            positionSide = json_message['o']['ps']
+            side = json_message['o']['S']
+            state = json_message['o']['X']
+            print(f"symbol: {symbol}, side: {side}, positionSide: {positionSide}, state: {state}")
+            if state == 'FILLED' and ((side == 'BUY' and positionSide == 'LONG') or (side == 'SELL' and positionSide == 'SHORT')):
+                print("Posición Abierta")
+                if self.stopLoss_enabled.get():
+                    self.place_stoploss_order(positionSide=positionSide, symbol=symbol)
+
+        def on_error(ws, error):
+            print(error)
+
+        def on_close(close_msg):
+            print("### closed ###" + close_msg)
+
+        def streamUserdata(listenKey):
+            websocket.enableTrace(False)
+            socket = f'wss://fstream.binance.com/ws/{listenKey}'
+            ws_userData = websocket.WebSocketApp(socket,on_message=on_message,on_error=on_error,on_close=on_close)    
+            ws_userData.run_forever()
+            return
+        streamUserdata(self.listenKey)
 
     def cancel_all(self):
         self.client.futures_cancel_all_open_orders(symbol= self.symbol)
@@ -202,7 +234,6 @@ class Application(Frame):
         def streamKline(currency):
             websocket.enableTrace(False)
             socket = f'wss://fstream.binance.com/ws/{currency}@kline_1m'
-
             self.ws = websocket.WebSocketApp(socket,
                                         on_message=on_message,
                                         on_error=on_error,
@@ -259,7 +290,6 @@ class Application(Frame):
         if order_type == 'STP':
             self.place_stoploss_order(positionSide=positionSide)
         elif order_type == 'ACTIV':
-            print(f"symbol={symbol}, side={orderSide}, positionSide={positionSide}, type='STOP_MARKET',  quantity={quantity},limitPrice={limit_price}")
             activ_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type='STOP_MARKET',  quantity=quantity,stopPrice=limit_price)
         elif order_type == 'LIMIT':
             limitorder = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type=order_type, quantity=quantity,price=limit_price, 
@@ -267,13 +297,14 @@ class Application(Frame):
         elif order_type == 'MARKET':
             market_order = self.client.futures_create_order(symbol=symbol, side=orderSide, positionSide=positionSide, type=order_type, quantity=quantity)
             limit_price = varLast.get()
-        print(f"StopLoss order placed in {symbol}. Position: {positionSide}, Price: {limit_price}")
+        print(f"{order_type} order placed in {symbol}. Position: {positionSide}, Price: {limit_price}")
         if self.trailing_enabled.get():
             trailing_order = self.client.futures_create_order(symbol=symbol, side=slSide, positionSide= positionSide, type='TRAILING_STOP_MARKET', quantity=quantity, activationPrice= limit_price, callbackRate=varCallbackRate.get(), timeInForce='GTC')
             print("Trailing order placed")     
                 
-    def place_stoploss_order(self, positionSide):
-        symbol = varSymbol.get()
+    def place_stoploss_order(self, positionSide, symbol=""):
+        if symbol == "":
+            symbol = varSymbol.get()
         if positionSide == 'LONG':
             stopPrice = round(varLast.get()*(1-varStopLoss.get()/100),self.tickround)
             slSide = 'SELL'
@@ -333,6 +364,7 @@ varSymbol = StringVar(root, value='BTCUSDT')
 varQuantity = StringVar(root, value='100')
 varLimitPrice = StringVar(root, value='1')
 varOrderType = StringVar(root, value='ACTIV')
+
 varCallbackRate = StringVar(root, value='0.1')
 varStopLoss = DoubleVar(root, value='0.1')
 varLast = DoubleVar()

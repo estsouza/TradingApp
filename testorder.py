@@ -65,6 +65,3 @@ def place_stoploss_order(positionSide):
     print(f"StopLoss order placed in {symbol}. Position: {positionSide}, StopPrice: {stopPrice}")
 
 streamUserdata()
-
-
-
