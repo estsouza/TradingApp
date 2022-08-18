@@ -106,22 +106,6 @@ class Application(Frame):
         self.spStopLoss = Spinbox(f1, font=myFont, increment=0.01, from_=0.01, to=5, width=6, textvariable=varStopLoss)
         self.spStopLoss.grid(row=3, column=4)
         
-        """
-        #create Bid Label
-        self.label2 = Label(f1, font=myFont, text="Bid", width=7).grid(row=4, column=2)
-        #create Ask Label
-        self.label3 = Label(f1, font=myFont, text="Ask", width=7).grid(row=4, column=3)
-        
-        #create textbox(Entry box) for the Bid price
-        self.tbBid = Entry(f1, font=myFont, width=7, textvariable = varBid)
-        #self.tbBid.bind("<Button-1>", self.tbBid_Click)
-        self.tbBid.grid(row=5, column =2, sticky=E)
-        
-        #create textbox(Entry box) for the Ask price
-        self.tbAsk = Entry(f1, font=myFont, width=7, textvariable = varAsk)
-        #self.tbAsk.bind("<Button-1>", self.tbAsk_Click)
-        self.tbAsk.grid(row=5, column=3)
-        """
         #create a sell button ***
         self.btnSell = Button(f1, font=('Lucida Grande',10,'bold'), text="SHORT", width=9, bg="red", fg="white", command=self.sell)
         self.btnSell.grid(row=5, column=1, sticky=W)
@@ -209,14 +193,10 @@ class Application(Frame):
                     self.com += com
                     self.rp += rp
                     print(f"--- TRADE CLOSED in {symbol}---")
-                    print(f"RP: {self.rp}. Fees: {self.com * 2} {comc}")
+                    print(f"RP: {round(self.rp,2)}. Fees: {round(self.com * 2, 2)} {comc}")
                     self.rp = 0
                     self.com = 0
-                    
-            """elif state == 'FILLED' and ((side == 'BUY' and positionSide == 'SHORT') or (side == 'SELL' and positionSide == 'LONG')):
-                print(f"--- TRADE CLOSED in {symbol}---")
-                self.get_orders_to_cancel(positionSide=positionSide, symbol=symbol)"""
-            
+                               
         def on_error(ws, error):
             print(error)
 
@@ -253,11 +233,6 @@ class Application(Frame):
             self.client.futures_cancel_order(symbol=symbol, orderId=orderId)
         except:
             print("Error in cancelling order")
-
-    """def cancel_order(self, symbol, orderId):
-        print(f"About to cancel order {orderId}")
-        order_to_cancel = self.client.futures_cancel_order(symbol=symbol, orderId=orderId)
-        print(f"Order cancelled, orderId{orderId}")"""
 
     def cbSymbol_onEnter(self, event):
         varSymbol.set(varSymbol.get().upper())
@@ -389,28 +364,6 @@ class Application(Frame):
     def last_to_limit(self, event=None):
         varLimitPrice.set(varLast.get())
         self.focus_to_limit_price()
-        
-"""
-    def server_handler(self, msg):
-        if msg.typeName == "nextValidId":
-            self.order_id = msg.orderId
-        elif msg.typeName == "managedAccounts":
-            self.account_code = msg.accountsList
-        elif msg.typeName == "updatePortfolio" \
-                and msg.contract.m_symbol == self.symbol \
-                and msg.contract.m_secType == 'STK':  # added this to my code not shown in video ******
-            self.unrealized_pnl = msg.unrealizedPNL
-            self.realized_pnl = msg.realizedPNL
-            self.position = msg.position
-            self.average_price = msg.averageCost
-        elif msg.typeName == "error" and msg.id != -1:
-            return#
-            """
-"""    
-    def error_handler(self, msg):
-        if msg.typeName == 'error'and msg.id != -1:
-            print ('Server Error:', msg)
-    """
 
 root = Tk()
 root.title("Conexion a Binance")
