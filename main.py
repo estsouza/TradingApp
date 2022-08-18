@@ -156,17 +156,28 @@ class Application(Frame):
         response = requests.post(url, headers={'X-MBX-APIKEY': binance_api_key}) 
         try:
             json = response.json()
+            self.ping = True
             print('listenKey obtained')
             return json['listenKey']
         except:
             print('Error in getting listenKey')
+
+    def keepalive_user_data(self, binance_api_key):
+        url = 'https://fapi.binance.com/fapi/v1/listenKey'
+        time.sleep(1800)
+        while self.ping:
+            ping = requests.put(url, headers={'X-MBX-APIKEY': binance_api_key}) 
+            print("ping sent")
+            time.sleep(1800)
         
     def connect_to_binance(self):
         # initialize the client
         self.client = Client(keys.API_KEY, keys.API_SECRET, tld='com')
         self.check_connection()
         self.listenKey = self.get_listenKey(keys.API_KEY)
+        # ping userdata stream a 1 hora
         threading.Thread(target=self.request_user_data, args=[self.listenKey]).start()
+        threading.Thread(target=self.keepalive_user_data, args=[keys.API_KEY]).start()
         
     def disconnect_it(self):
         self.client = None
@@ -198,7 +209,7 @@ class Application(Frame):
                     self.com += com
                     self.rp += rp
                     print(f"--- TRADE CLOSED in {symbol}---")
-                    print(f"RP: {self.rp}. Fees: {self.com} {comc}")
+                    print(f"RP: {self.rp}. Fees: {self.com * 2} {comc}")
                     self.rp = 0
                     self.com = 0
                     
@@ -215,7 +226,8 @@ class Application(Frame):
         def streamUserdata(listenKey):
             websocket.enableTrace(False)
             socket = f'wss://fstream.binance.com/ws/{listenKey}'
-            ws_userData = websocket.WebSocketApp(socket,on_message=on_message,on_error=on_error,on_close=on_close)    
+            ws_userData = websocket.WebSocketApp(socket,on_message=on_message,on_error=on_error,on_close=on_close)
+            print(f"UserData Stream opened")    
             ws_userData.run_forever()
             return
         streamUserdata(self.listenKey)
