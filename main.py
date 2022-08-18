@@ -26,6 +26,8 @@ class Application(Frame):
         self.symbol_id, self.symbol = 0, 'BTCUSDT'
         self.client = None
         self.stoploss_orders = []
+        self.rp = 0
+        self.com = 0
         
     def create_widgets(self):
         """ create the window layout. """
@@ -177,14 +179,33 @@ class Application(Frame):
             positionSide = json_message['o']['ps']
             side = json_message['o']['S']
             state = json_message['o']['X']
+            ex_type = json_message['o']['x']
+
             if state == 'FILLED' and ((side == 'BUY' and positionSide == 'LONG') or (side == 'SELL' and positionSide == 'SHORT')):
                 print(f"--- TRADE OPENED in {symbol}---")
                 if self.stopLoss_enabled.get():
                     self.place_stoploss_order(positionSide=positionSide, symbol=symbol)
-            elif state == 'FILLED' and ((side == 'BUY' and positionSide == 'SHORT') or (side == 'SELL' and positionSide == 'LONG')):
+            
+            elif ((side == 'BUY' and positionSide == 'SHORT') or (side == 'SELL' and positionSide == 'LONG')) and ex_type == 'TRADE':
+                rp = float(json_message['o']['rp'])
+                com = float(json_message['o']['n'])
+                comc = json_message['o']['N']
+                if state == 'PARTIALLY_FILLED':
+                    self.com += com
+                    self.rp += rp
+                elif state == 'FILLED':
+                    self.get_orders_to_cancel(positionSide=positionSide, symbol=symbol)
+                    self.com += com
+                    self.rp += rp
+                    print(f"--- TRADE CLOSED in {symbol}---")
+                    print(f"RP: {self.rp}. Fees: {self.com} {comc}")
+                    self.rp = 0
+                    self.com = 0
+                    
+            """elif state == 'FILLED' and ((side == 'BUY' and positionSide == 'SHORT') or (side == 'SELL' and positionSide == 'LONG')):
                 print(f"--- TRADE CLOSED in {symbol}---")
-                self.get_orders_to_cancel(positionSide=positionSide, symbol=symbol)
-
+                self.get_orders_to_cancel(positionSide=positionSide, symbol=symbol)"""
+            
         def on_error(ws, error):
             print(error)
 

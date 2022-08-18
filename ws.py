@@ -1,22 +1,30 @@
-[{'orderId': 7696916676, 'symbol': 'GMTUSDT', 'status': 'NEW', 'clientOrderId': '3eCbr0pZUgzaI6FlxzNSTe', 'price': '0', 'avgPrice': '0', 'origQty': '10', 'executedQty': '0', 'cumQuote': '0', 'timeInForce': 'GTC', 'type': 'STOP_MARKET', 'reduceOnly': False, 'closePosition': False, 'side': 'BUY', 'positionSide': 'LONG', 'stopPrice': '1', 'workingType': 'CONTRACT_PRICE', 'priceProtect': False, 'origType': 'STOP_MARKET', 'time': 1660768938225, 'updateTime': 1660768938225}, 
+MARKET order placed in GMTUSDT. Position: LONG, Price: 0.9773
+{'e': 'ORDER_TRADE_UPDATE', 'T': 1660833410227, 'E': 1660833410396, 'o': {'s': 'GMTUSDT', 'c': 'JL57lg7ob8h38YWBtneine', 'S': 'BUY', 'o': 'MARKET', 'f': 'GTC', 'q': '1000', 'p': '0', 'ap': '0', 'sp': '0', 'x': 'NEW', 'X': 'NEW', 'i': 7712864761, 'l': '0', 'z': '0', 'L': '0', 'T': 1660833410227, 't': 0, 'b': '0', 'a': '0', 'm': False, 'R': False, 'wt': 'CONTRACT_PRICE', 'ot': 'MARKET', 'ps': 'LONG', 'cp': False, 'rp': '0', 'pP': False, 'si': 0, 'ss': 0}}
 
+{'e': 'ORDER_TRADE_UPDATE', 'T': 1660833410227, 'E': 1660833410396, 'o': {'s': 'GMTUSDT', 'c': 'JL57lg7ob8h38YWBtneine', 'S': 'BUY', 'o': 'MARKET', 'f': 'GTC', 'q': '1000', 'p': '0', 'ap': '0.97680', 'sp': '0', 'x': 'TRADE', 'X': 'PARTIALLY_FILLED', 'i': 7712864761, 'l': '608', 'z': '608', 'L': '0.97680', 'n': '0.23755776', 'N': 'USDT', 'T': 1660833410227, 't': 479241862, 'b': '0', 'a': '0', 'm': False, 'R': False, 'wt': 'CONTRACT_PRICE', 'ot': 'MARKET', 'ps': 'LONG', 'cp': False, 'rp': '0', 'pP': False, 'si': 0, 'ss': 0}}
 
+{'e': 'ORDER_TRADE_UPDATE', 'T': 1660833410227, 'E': 1660833410397, 'o': {'s': 'GMTUSDT', 'c': 'JL57lg7ob8h38YWBtneine', 'S': 'BUY', 'o': 'MARKET', 'f': 'GTC', 'q': '1000', 'p': '0', 'ap': '0.97680', 'sp': '0', 'x': 'TRADE', 'X': 'PARTIALLY_FILLED', 'i': 7712864761, 'l': '53', 'z': '661', 'L': '0.97680', 'n': '0.02070816', 'N': 'USDT', 'T': 1660833410227, 't': 479241863, 'b': '0', 'a': '0', 'm': False, 'R': False, 'wt': 'CONTRACT_PRICE', 'ot': 'MARKET', 'ps': 'LONG', 'cp': False, 'rp': '0', 'pP': False, 'si': 0, 'ss': 0}}
 
+{'e': 'ORDER_TRADE_UPDATE', 'T': 1660833410227, 'E': 1660833410397, 'o': {'s': 'GMTUSDT', 'c': 'JL57lg7ob8h38YWBtneine', 'S': 'BUY', 'o': 'MARKET', 'f': 'GTC', 'q': '1000', 'p': '0', 'ap': '0.97680', 'sp': '0', 'x': 'TRADE', 'X': 'PARTIALLY_FILLED', 'i': 7712864761, 'l': '11', 'z': '672', 'L': '0.97680', 'n': '0.00429792', 'N': 'USDT', 'T': 1660833410227, 't': 479241864, 'b': '0', 'a': '0', 'm': False, 'R': False, 'wt': 'CONTRACT_PRICE', 'ot': 'MARKET', 'ps': 'LONG', 'cp': False, 'rp': '0', 'pP': False, 'si': 0, 'ss': 0}}
 
+{'e': 'ORDER_TRADE_UPDATE', 'T': 1660833410227, 'E': 1660833410397, 'o': {'s': 'GMTUSDT', 'c': 'JL57lg7ob8h38YWBtneine', 'S': 'BUY', 'o': 'MARKET', 'f': 'GTC', 'q': '1000', 'p': '0', 'ap': '0.97680', 'sp': '0', 'x': 'TRADE', 'X': 'FILLED', 'i': 7712864761, 'l': '328', 'z': '1000', 'L': '0.97680', 'n': '0.12815616', 'N': 'USDT', 'T': 1660833410227, 't': 479241865, 'b': '0', 'a': '0', 'm': False, 'R': False, 'wt': 
+'CONTRACT_PRICE', 'ot': 'MARKET', 'ps': 'LONG', 'cp': False, 'rp': '0', 'pP': False, 'si': 0, 'ss': 0}}
 
-{'orderId': 7696912773, 
-'symbol': 'GMTUSDT', 
-'status': 'NEW', 'clientOrderId': 'UCaEtoBKqLKZrbWNt9Ppwe', 'price': '0', 'avgPrice': '0', 'origQty': '0', 'executedQty': '0', 'cumQuote': '0', 'timeInForce': 'GTC', 
-'type': 'STOP_MARKET',
- 'reduceOnly': True, 
-'closePosition': True, 
-'side': 'SELL', 
-'positionSide': 'LONG', 
-'stopPrice': '0.99310', 'workingType': 'CONTRACT_PRICE', 'priceProtect': False, 'origType': 'STOP_MARKET', 'time': 1660768919444, 'updateTime': 1660768919444}, 
+--- TRADE OPENED in GMTUSDT---
+Trailing order placed
+StopLoss order placed in GMTUSDT. Position: LONG, StopPrice: 0.9762
 
-{'orderId': 7696910562, 
-'symbol': 'GMTUSDT', 
-'status': 'NEW', 
-'clientOrderId': 'vJDsWjyIS0nq40qWqZqels', 'price': '0', 'avgPrice': '0', 'origQty': '10', 'executedQty': '0', 'activatePrice': '0.99410', 'priceRate': '0.2', 'cumQuote': '0', 'timeInForce': 'GTC', 'type': 'TRAILING_STOP_MARKET', 'reduceOnly': True, 'closePosition': False, 'side': 'SELL', 
-'positionSide': 'LONG',
- 'stopPrice': '0.99201', 'workingType': 'CONTRACT_PRICE', 'priceProtect': False, 'origType': 'TRAILING_STOP_MARKET', 'time': 1660768907826, 'updateTime': 1660768907826}]
+{'e': 'ORDER_TRADE_UPDATE', 'T': 1660833410581, 'E': 1660833410639, 'o': {'s': 'GMTUSDT', 'c': 'LI5EedcrVSIFOMtbEVPI5H', 'S': 'SELL', 'o': 'TRAILING_STOP_MARKET', 'f': 'GTC', 'q': '1000', 'p': '0', 'ap': '0', 'sp': '0.97484', 'x': 'NEW', 'X': 'NEW', 'i': 7712864993, 'l': '0', 'z': '0', 'L': '0', 'T': 1660833410581, 't': 0, 'b': '0', 'a': '0', 'm': False, 'R': True, 'wt': 'CONTRACT_PRICE', 'ot': 'TRAILING_STOP_MARKET', 'ps': 'LONG', 'cp': False, 'AP': '0.97730', 'cr': '0.2', 'rp': '0', 'pP': False, 'si': 0, 'ss': 0}}
+{'e': 'ORDER_TRADE_UPDATE', 'T': 1660833410916, 'E': 1660833410924, 'o': {'s': 'GMTUSDT', 'c': 'sACe9aRuDr4PFszqcezpX3', 'S': 'SELL', 'o': 'STOP_MARKET', 'f': 'GTC', 'q': '0', 'p': '0', 'ap': '0', 'sp': '0.97620', 'x': 'NEW', 'X': 'NEW', 'i': 7712865106, 'l': '0', 'z': '0', 'L': '0', 'T': 1660833410916, 't': 0, 'b': '0', 'a': '0', 'm': False, 'R': True, 'wt': 'CONTRACT_PRICE', 'ot': 'STOP_MARKET', 'ps': 'LONG', 'cp': True, 'rp': '0', 'pP': False, 'si': 0, 'ss': 0}}
+{'e': 'ORDER_TRADE_UPDATE', 'T': 1660833417435, 'E': 1660833417446, 'o': {'s': 'GMTUSDT', 'c': 'electron_rAJNVzr3exJXkbgh8Hxo', 'S': 'SELL', 'o': 'MARKET', 'f': 'GTC', 'q': '1000', 'p': '0', 'ap': '0', 'sp': 
+'0', 'x': 'NEW', 'X': 'NEW', 'i': 7712866494, 'l': '0', 'z': '0', 'L': '0', 'T': 1660833417435, 't': 0, 'b': '0', 'a': '0', 'm': False, 'R': True, 'wt': 'CONTRACT_PRICE', 'ot': 'MARKET', 'ps': 'LONG', 'cp': False, 'rp': '0', 'pP': False, 'si': 0, 'ss': 0}}
+{'e': 'ORDER_TRADE_UPDATE', 'T': 1660833417435, 'E': 1660833417447, 'o': {'s': 'GMTUSDT', 'c': 'electron_rAJNVzr3exJXkbgh8Hxo', 'S': 'SELL', 'o': 'MARKET', 'f': 'GTC', 'q': '1000', 'p': '0', 'ap': '0.97680', 
+'sp': '0', 'x': 'TRADE', 'X': 'PARTIALLY_FILLED', 'i': 7712866494, 'l': '504', 'z': '504', 'L': '0.97680', 'n': '0.19692288', 'N': 'USDT', 'T': 1660833417435, 't': 479241940, 'b': '0', 'a': '0', 'm': False, 'R': True, 'wt': 'CONTRACT_PRICE', 'ot': 'MARKET', 'ps': 'LONG', 'cp': False, 'rp': '0', 'pP': False, 'si': 0, 'ss': 0}}
+{'e': 'ORDER_TRADE_UPDATE', 'T': 1660833417435, 'E': 1660833417447, 'o': {'s': 'GMTUSDT', 'c': 'electron_rAJNVzr3exJXkbgh8Hxo', 'S': 'SELL', 'o': 'MARKET', 'f': 'GTC', 'q': '1000', 'p': '0', 'ap': '0.97680', 
+'sp': '0', 'x': 'TRADE', 'X': 'FILLED', 'i': 7712866494, 'l': '496', 'z': '1000', 'L': '0.97680', 'n': '0.19379712', 'N': 'USDT', 'T': 1660833417435, 't': 479241941, 'b': '0', 'a': '0', 'm': False, 'R': True, 'wt': 'CONTRACT_PRICE', 'ot': 'MARKET', 'ps': 'LONG', 'cp': False, 'rp': '0', 'pP': False, 'si': 0, 'ss': 0}}
+--- TRADE CLOSED in GMTUSDT---
+Getting hanging orders
+Cancelling STOP_MARKET order, positionSide: LONG, symbol: GMTUSDT, orderId: 7712865106.
+Cancelling TRAILING_STOP_MARKET order, positionSide: LONG, symbol: GMTUSDT, orderId: 7712864993.
+{'e': 'ORDER_TRADE_UPDATE', 'T': 1660833418619, 'E': 1660833418625, 'o': {'s': 'GMTUSDT', 'c': 'sACe9aRuDr4PFszqcezpX3', 'S': 'SELL', 'o': 'STOP_MARKET', 'f': 'GTC', 'q': '0', 'p': '0', 'ap': '0', 'sp': '0.97620', 'x': 'CANCELED', 'X': 'CANCELED', 'i': 7712865106, 'l': '0', 'z': '0', 'L': '0', 'T': 1660833418619, 't': 0, 'b': '0', 'a': '0', 'm': False, 'R': True, 'wt': 'CONTRACT_PRICE', 'ot': 'STOP_MARKET', 'ps': 'LONG', 'cp': True, 'rp': '0', 'pP': False, 'si': 0, 'ss': 0}}
+{'e': 'ORDER_TRADE_UPDATE', 'T': 1660833419556, 'E': 1660833419565, 'o': {'s': 'GMTUSDT', 'c': 'LI5EedcrVSIFOMtbEVPI5H', 'S': 'SELL', 'o': 'TRAILING_STOP_MARKET', 'f': 'GTC', 'q': '1000', 'p': '0', 'ap': '0', 'sp': '0.97484', 'x': 'CANCELED', 'X': 'CANCELED', 'i': 7712864993, 'l': '0', 'z': '0', 'L': '0', 'T': 1660833419556, 't': 0, 'b': '0', 'a': '0', 'm': False, 'R': True, 'wt': 'CONTRACT_PRICE', 'ot': 'TRAILING_STOP_MARKET', 'ps': 'LONG', 'cp': False, 'AP': '0.97730', 'cr': '0.2', 'rp': '0', 'pP': False, 'si': 0, 'ss': 0}}
