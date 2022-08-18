@@ -92,6 +92,7 @@ class Application(Frame):
         #create textbox(SpinBox) for the Trailing Stop Callback Rate
         self.trailing_enabled = tkinter.BooleanVar(self)
         self.chboxTrailingStop = ttk.Checkbutton(f1, text="Trailing Stop", variable=self.trailing_enabled)
+        self.trailing_enabled.set(True)
         self.chboxTrailingStop.grid(row=3, column=1)
         self.spCRate = Spinbox(f1, font=myFont, increment=0.1, from_=0.1, to=5, width=6, textvariable=varCallbackRate).grid(row=3, column=2)
         
@@ -175,11 +176,13 @@ class Application(Frame):
             positionSide = json_message['o']['ps']
             side = json_message['o']['S']
             state = json_message['o']['X']
-            print(f"symbol: {symbol}, side: {side}, positionSide: {positionSide}, state: {state}")
             if state == 'FILLED' and ((side == 'BUY' and positionSide == 'LONG') or (side == 'SELL' and positionSide == 'SHORT')):
-                print("Posición Abierta")
+                print(f"--- TRADE OPENED in {symbol}---")
                 if self.stopLoss_enabled.get():
                     self.place_stoploss_order(positionSide=positionSide, symbol=symbol)
+            elif state == 'FILLED' and ((side == 'BUY' and positionSide == 'SHORT') or (side == 'SELL' and positionSide == 'LONG')):
+                print(f"--- TRADE CLOSED in {symbol}---")
+                self.get_orders_to_cancel(positionSide=positionSide, symbol=symbol)
 
         def on_error(ws, error):
             print(error)
@@ -199,6 +202,21 @@ class Application(Frame):
         self.client.futures_cancel_all_open_orders(symbol= self.symbol)
         self.stoploss_orders = []
         print("All orders cancelled")
+
+    def get_orders_to_cancel(self, positionSide, symbol):
+        print("Getting hanging orders")
+        orders = self.client.futures_get_open_orders(symbol=symbol)
+        
+        for order in orders:
+            if order['symbol'] == symbol and order['positionSide'] == positionSide and order['status'] == 'NEW' and order['reduceOnly'] == True:
+                print(f"Cancelling {order['type']} order, positionSide: {order['positionSide']}, symbol: {order['symbol']}, orderId: {order['orderId']}.")
+                threading.Thread(target=self.cancel_order, args=[order['symbol'], order['orderId']]).start()
+                #self.cancel_order(symbol=order['symbol'], orderId=order['orderId'])
+        
+    def cancel_order(self, symbol, orderId):
+        print(f"About to cancel order {orderId}")
+        order_to_cancel = self.client.futures_cancel_order(symbol=symbol, orderId=orderId)
+        print(f"Order cancelled, orderId{orderId}")
 
     def cbSymbol_onEnter(self, event):
         varSymbol.set(varSymbol.get().upper())
@@ -365,7 +383,7 @@ varQuantity = StringVar(root, value='100')
 varLimitPrice = StringVar(root, value='1')
 varOrderType = StringVar(root, value='ACTIV')
 
-varCallbackRate = StringVar(root, value='0.1')
+varCallbackRate = StringVar(root, value='0.2')
 varStopLoss = DoubleVar(root, value='0.1')
 varLast = DoubleVar()
 
