@@ -74,8 +74,8 @@ class Application(Frame):
 
         #create spinbox (numericUpDown) for Limit Price
         #self.spinQuantity = Spinbox(f1, font=myFont, increment=100, from_=0, to=10000, width=7, textvariable=varQuantity)
-        self.quantity = Entry(f1, font=myFont, width=7, textvariable=varQuantity)
-        self.quantity.grid(row=1, column=2)
+        self.entQuantity = Entry(f1, font=myFont, width=7, textvariable=varQuantity)
+        self.entQuantity.grid(row=1, column=2)
         #create spinbox (numericUpDown) for Limit Price
         self.spinLimitPrice = Spinbox(f1,font=myFont, format='%10.5f', increment=.01, from_=0.0, to=100000.0, width=10, textvariable=varLimitPrice)
         # when control and up or down arrow are pressed call spenLimitDime()
@@ -101,7 +101,8 @@ class Application(Frame):
         self.chboxStopLoss = ttk.Checkbutton(f1, text="Stop Loss", variable=self.stopLoss_enabled)
         self.stopLoss_enabled.set(True)
         self.chboxStopLoss.grid(row=3, column=3)
-        self.spStopLoss = Spinbox(f1, font=myFont, increment=0.01, from_=0.01, to=5, width=6, textvariable=varStopLoss).grid(row=3, column=4)
+        self.spStopLoss = Spinbox(f1, font=myFont, increment=0.01, from_=0.01, to=5, width=6, textvariable=varStopLoss)
+        self.spStopLoss.grid(row=3, column=4)
         
         """
         #create Bid Label
@@ -212,11 +213,18 @@ class Application(Frame):
                 print(f"Cancelling {order['type']} order, positionSide: {order['positionSide']}, symbol: {order['symbol']}, orderId: {order['orderId']}.")
                 threading.Thread(target=self.cancel_order, args=[order['symbol'], order['orderId']]).start()
                 #self.cancel_order(symbol=order['symbol'], orderId=order['orderId'])
-        
+
     def cancel_order(self, symbol, orderId):
+        try:
+            time.sleep(0.5)
+            self.client.futures_cancel_order(symbol=symbol, orderId=orderId)
+        except:
+            print("Error in cancelling order")
+
+    """def cancel_order(self, symbol, orderId):
         print(f"About to cancel order {orderId}")
         order_to_cancel = self.client.futures_cancel_order(symbol=symbol, orderId=orderId)
-        print(f"Order cancelled, orderId{orderId}")
+        print(f"Order cancelled, orderId{orderId}")"""
 
     def cbSymbol_onEnter(self, event):
         varSymbol.set(varSymbol.get().upper())
@@ -268,13 +276,6 @@ class Application(Frame):
             self.tickround = int(math.log10(self.ticksize)*-1)
         except:
             self.check_connection()
-
-    def cancel_order(self, symbol, orderId):
-        try:
-            time.sleep(0.5)
-            self.client.futures_cancel_order(symbol=symbol, orderId=orderId)
-        except:
-            print("Error in cancelling order")
 
     def cancel_market_data(self):
         try:
@@ -339,14 +340,18 @@ class Application(Frame):
         print(f"StopLoss order placed in {symbol}. Position: {positionSide}, StopPrice: {stopPrice}")
 
     def focus_to_qty(self):
-        self.quantity.focus_set()
-        self.quantity.selection_range(0, END)
-        self.quantity.icursor(END)
+        self.entQuantity.focus_set()
+        self.entQuantity.selection_range(0, END)
+        self.entQuantity.icursor(END)
 
     def focus_to_limit_price(self):
         self.spinLimitPrice.focus_set()
         self.spinLimitPrice.selection_range(0, END)
         self.spinLimitPrice.icursor(END)
+
+    def focus_to_stoploss(self):
+        self.spStopLoss.focus_set()
+        self.spStopLoss.icursor(END)
 
     def last_to_limit(self, event=None):
         varLimitPrice.set(varLast.get())
@@ -396,6 +401,7 @@ root.bind('<F4>', lambda event: varOrderType.set('MARKET'))
 root.bind('<F5>', lambda event: varOrderType.set('STP'))
 root.bind('<Control-w>', lambda event: app.focus_to_qty())
 root.bind('<Control-e>', lambda event: app.focus_to_limit_price())
+root.bind('<Control-f>', lambda event: app.focus_to_stoploss())
 root.bind('<Control-r>', lambda event: app.cancel_all())
 root.bind('<Control-s>', lambda event: app.sell())
 root.bind('<Control-d>', lambda event: app.buy())

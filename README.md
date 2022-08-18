@@ -4,6 +4,8 @@ features pendientes
 
  - paneles paralelos para distintas cryptos
 
+ - info de trade cerrado. slippage. comis. profitb. profit n
+
  - Opcion de poner nuevo SL solo si mejora el precio
 
  - batch orders
