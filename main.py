@@ -193,7 +193,7 @@ class Application(Frame):
                     self.com += com
                     self.rp += rp
                     print(f"--- TRADE CLOSED in {symbol}---")
-                    print(f"RP: {round(self.rp,2)}. Fees: {round(self.com * 2, 2)} {comc}")
+                    print(f"PnL: {round(self.rp,2)}. Fees: {round((self.com * 2), 2)} {comc}")
                     self.rp = 0
                     self.com = 0
                                
@@ -222,7 +222,6 @@ class Application(Frame):
         orders = self.client.futures_get_open_orders(symbol=symbol)
         
         for order in orders:
-            print(order)
             if order['symbol'] == symbol and order['positionSide'] == positionSide and order['status'] == 'NEW' and order['reduceOnly'] == True:
                 if order['type'] == 'TRAILING_STOP_MARKET':
                     if (order['positionSide'] == 'LONG' and order['activatePrice'] > varLast.get()) or (order['positionSide'] == 'SHORT' and order['activatePrice'] < varLast.get()): 
@@ -281,12 +280,14 @@ class Application(Frame):
             self.ws.run_forever()
             return
         streamKline(self.symbol)
+        print(f"Opening Stream Market Data: {symbol}")
     
     def request_ticksize(self, symbol):
         try:
-            request = self.client.get_symbol_info(self.symbol)
+            request = self.client.get_symbol_info(symbol)
             self.ticksize = float((request['filters'][0]['tickSize']))
             self.tickround = int(math.log10(self.ticksize)*-1)
+            print(f"{symbol}, ticksize: {self.tickround}")
         except:
             self.check_connection()
 
@@ -395,9 +396,9 @@ root.bind('<Control-w>', lambda event: app.last_to_limit())
 root.bind('<Control-e>', lambda event: app.focus_to_limit_price())
 root.bind('<Control-f>', lambda event: app.focus_to_stoploss())
 root.bind('<Control-r>', lambda event: app.cancel_all())
-root.bind('<Control-s>', lambda event: app.sell())
-root.bind('<Control-d>', lambda event: app.buy())
-root.bind('<Control-o>', lambda event: app.place_stoploss_order(positionSide='SHORT'))
-root.bind('<Control-p>', lambda event: app.place_stoploss_order(positionSide='LONG'))
+root.bind('<Home>', lambda event: app.sell())
+root.bind('<Prior>', lambda event: app.buy()) # PageUp
+root.bind('<End>', lambda event: app.place_stoploss_order(positionSide='SHORT'))
+root.bind('<Next>', lambda event: app.place_stoploss_order(positionSide='LONG')) # PageDown
 
 root.mainloop()
