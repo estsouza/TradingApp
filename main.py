@@ -189,7 +189,8 @@ class Application(Frame):
                     self.com += com
                     self.rp += rp
                 elif state == 'FILLED':
-                    self.get_orders_to_cancel(positionSide=positionSide, symbol=symbol)
+                    threading.Thread(target=self.get_orders_to_cancel, args=[positionSide, symbol]).start()
+                    #self.get_orders_to_cancel(positionSide=positionSide, symbol=symbol)
                     self.com += com
                     self.rp += rp
                     print(f"--- TRADE CLOSED in {symbol}---")
@@ -279,8 +280,9 @@ class Application(Frame):
         
             self.ws.run_forever()
             return
-        streamKline(self.symbol)
         print(f"Opening Stream Market Data: {symbol}")
+        streamKline(self.symbol)
+        
     
     def request_ticksize(self, symbol):
         try:
