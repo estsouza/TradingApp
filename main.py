@@ -222,10 +222,15 @@ class Application(Frame):
         orders = self.client.futures_get_open_orders(symbol=symbol)
         
         for order in orders:
+            print(order)
             if order['symbol'] == symbol and order['positionSide'] == positionSide and order['status'] == 'NEW' and order['reduceOnly'] == True:
-                print(f"Cancelling {order['type']} order, positionSide: {order['positionSide']}, symbol: {order['symbol']}, orderId: {order['orderId']}.")
-                threading.Thread(target=self.cancel_order, args=[order['symbol'], order['orderId']]).start()
-                #self.cancel_order(symbol=order['symbol'], orderId=order['orderId'])
+                if order['type'] == 'TRAILING_STOP_MARKET':
+                    if (order['positionSide'] == 'LONG' and order['activatePrice'] > varLast.get()) or (order['positionSide'] == 'SHORT' and order['activatePrice'] < varLast.get()): 
+                        print(f"Cancelling {order['type']} order, positionSide: {order['positionSide']}, symbol: {order['symbol']}, orderId: {order['orderId']}.")
+                        threading.Thread(target=self.cancel_order, args=[order['symbol'], order['orderId']]).start()
+                elif order['type'] != 'TRAILING_STOP_MARKET':
+                    print(f"Cancelling {order['type']} order, positionSide: {order['positionSide']}, symbol: {order['symbol']}, orderId: {order['orderId']}.")
+                    threading.Thread(target=self.cancel_order, args=[order['symbol'], order['orderId']]).start()
 
     def cancel_order(self, symbol, orderId):
         try:
@@ -385,7 +390,8 @@ root.bind('<F2>', lambda event: varOrderType.set('ACTIV'))
 root.bind('<F3>', lambda event: varOrderType.set('LIMIT'))
 root.bind('<F4>', lambda event: varOrderType.set('MARKET'))
 root.bind('<F5>', lambda event: varOrderType.set('STP'))
-root.bind('<Control-w>', lambda event: app.focus_to_qty())
+root.bind('<Control-q>', lambda event: app.focus_to_qty())
+root.bind('<Control-w>', lambda event: app.last_to_limit())
 root.bind('<Control-e>', lambda event: app.focus_to_limit_price())
 root.bind('<Control-f>', lambda event: app.focus_to_stoploss())
 root.bind('<Control-r>', lambda event: app.cancel_all())
