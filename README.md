@@ -4,13 +4,13 @@ features pendientes
 
  - paneles paralelos para distintas cryptos
 
- - info de trade cerrado. bug
-
  - Opcion de poner nuevo SL solo si mejora el precio
+
+ - guardar trades. analisis, exportar, etc
 
  - batch orders
 
- - restringir campos de texto a float
+ - restringir campos de texto a float / no insertar letras de shortcuts en campos
 
  - cambiar palanca
     client.futures_change_leverage(symbol='BNBUSDT', leverage=1) 
@@ -21,4 +21,4 @@ features pendientes
 
  - panel de ordenes
 
- - mostrar ordenes
+ - cerrar posiciones a mercado (todas, por instrumento, por posicion)

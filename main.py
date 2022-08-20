@@ -30,8 +30,6 @@ class Application(Frame):
         self.com = 0
         
     def create_widgets(self):
-        """ create the window layout. """
-
         myFont = ('Lucida Grande', 12)
 
         #create connect button widget
@@ -51,20 +49,19 @@ class Application(Frame):
         self.symbols = []
         self.symbols.append({'symbol':'GMTUSDT', 'quantity': 2000, 'limitPrice': 1.1})
         self.symbols.append({'symbol':'UNFIUSDT', 'quantity': 300, 'limitPrice': 11})
-        self.listbox1 = Listbox(f1, font=('Lucida Grande', 9), width=7)
+        self.listbox = Listbox(f1, font=('Lucida Grande', 12), width=10)
         #self.listbox1.bind('<Double-Button-1>', self.OnDoubleClick_listbox)
-        self.listbox1.insert(1, 'GMTUSDT')
-        self.listbox1.insert(2, 'BTCUSDT')
-        self.listbox1.insert(3, 'ETHUSDT')
-        self.listbox1.grid(row=0, rowspan=5, column=0, padx=5)
+        self.listbox.insert(1, 'GMTUSDT')
+        self.listbox.insert(2, 'UNFIUSDT')
+        self.listbox.insert(3, 'APEUSDT')
+        self.listbox.grid(row=0, rowspan=5, column=0, padx=5)
 
         self.label4 = Label(f1, font=myFont, text="Symbol").grid(row=0, column=1)
         self.label5 = Label(f1, font=myFont, text="Quantity").grid(row=0, column=2)
         self.label6 = Label(f1, font=myFont, text="Limit Price").grid(row=0, column=3)
         self.label7 = Label(f1, font=myFont, text="Order Type").grid(row=0, column=4)
-        self.label8 = Label(f1, font=myFont, text="").grid(row=2, column =1, sticky=W)
-        self.label9 = Label(f1, font=myFont, text="Trailing (%)").grid(row=2, column =2)
-        self.labe20 = Label(f1, font=myFont, text="").grid(row=2, column =3)
+        self.label8 = Label(f1, font=myFont, text="Ticksize").grid(row=2, column =1)
+        self.label9 = Label(f1, font=myFont, text="Trailing (%)").grid(row=2, column =3)
         self.labe21 = Label(f1, font=myFont, text="Stop Loss (%)").grid(row=2, column =4)
 
         #create combo box for the Symbol
@@ -90,29 +87,33 @@ class Application(Frame):
         self.cbOrderType = ttk.Combobox(f1, font=myFont, width=6, textvariable=varOrderType)
         self.cbOrderType['values'] = ('ACTIV', 'LIMIT','MARKET', 'STP') 
         self.cbOrderType.grid(row=1, column =4)
+
+        self.spTicksize = Spinbox(f1,font=myFont, increment=1, from_=-1, to=10, width=7, textvariable=varTicksize)
+        self.spTicksize.grid(row=3, column=1)
                 
         #create textbox(SpinBox) for the Trailing Stop Callback Rate
         self.trailing_enabled = tkinter.BooleanVar(self)
         self.chboxTrailingStop = ttk.Checkbutton(f1, text="Trailing Stop", variable=self.trailing_enabled)
         self.trailing_enabled.set(True)
-        self.chboxTrailingStop.grid(row=3, column=1)
-        self.spCRate = Spinbox(f1, font=myFont, increment=0.1, from_=0.1, to=5, width=6, textvariable=varCallbackRate).grid(row=3, column=2)
+        self.chboxTrailingStop.grid(row=2, column=2)
+        self.spCRate = Spinbox(f1, font=myFont, increment=0.1, from_=0.1, to=5, width=6, textvariable=varCallbackRate).grid(row=3, column=3)
         
         #create textbox(SpinBox) for the StopLoss Rate
         self.stopLoss_enabled = tkinter.BooleanVar(self)
         self.chboxStopLoss = ttk.Checkbutton(f1, text="Stop Loss", variable=self.stopLoss_enabled)
         self.stopLoss_enabled.set(True)
-        self.chboxStopLoss.grid(row=3, column=3)
+        self.chboxStopLoss.grid(row=3, column=2)
         self.spStopLoss = Spinbox(f1, font=myFont, increment=0.01, from_=0.01, to=5, width=6, textvariable=varStopLoss)
         self.spStopLoss.grid(row=3, column=4)
         
-        #create a sell button ***
         self.btnSell = Button(f1, font=('Lucida Grande',10,'bold'), text="SHORT", width=9, bg="red", fg="white", command=self.sell)
-        self.btnSell.grid(row=5, column=1, sticky=W)
-
-        #create a buy button ***
+        self.btnSell.grid(row=5, column=3)
         self.btnBuy = Button(f1, font=('Lucida Grande',10,'bold'), text="LONG", width=9, bg="green", fg="white", command= self.buy)
-        self.btnBuy.grid(row=5, column=4, sticky=E)
+        self.btnBuy.grid(row=5, column=4)
+        self.btnSLShort = Button(f1, font=('Lucida Grande',10,'bold'), text="MOVE SL", width=9, bg="red", fg="white", command=lambda: self.place_stoploss_order(positionSide='SHORT'))
+        self.btnSLShort.grid(row=6, column=3, pady= 5)
+        self.btnSLLong = Button(f1, font=('Lucida Grande',10,'bold'), text="MOVE SL", width=9, bg="green", fg="white", command=lambda: self.place_stoploss_order(positionSide='LONG'))
+        self.btnSLLong.grid(row=6, column=4)
 
         #create Label
         self.label1 = Label(f1, font=myFont, width=8, text="Last").grid(row=6, column =1)
@@ -340,6 +341,8 @@ class Application(Frame):
     def place_stoploss_order(self, positionSide, symbol=""):
         if symbol == "":
             symbol = varSymbol.get()
+        if varTicksize.get() > -1:
+            self.tickround = varTicksize.get()
         if positionSide == 'LONG':
             stopPrice = round(varLast.get()*(1-varStopLoss.get()/100),self.tickround)
             slSide = 'SELL'
@@ -381,6 +384,7 @@ varSymbol = StringVar(root, value='BTCUSDT')
 varQuantity = StringVar(root, value='100')
 varLimitPrice = StringVar(root, value='1')
 varOrderType = StringVar(root, value='ACTIV')
+varTicksize = IntVar(root, value='-1')
 
 varCallbackRate = StringVar(root, value='0.2')
 varStopLoss = DoubleVar(root, value='0.1')
