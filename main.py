@@ -10,6 +10,7 @@ import json
 import requests
 from binance import AsyncClient, BinanceSocketManager
 import keys
+import instrument
 from binance.client import Client
 from binance.enums import *
 import math
@@ -23,9 +24,10 @@ class Application(Frame):
 
         self.grid()
         self.create_widgets()
-        self.symbol_id, self.symbol = 0, 'BTCUSDT'
+        self.symbol = 'BTCUSDT'
         self.client = None
         self.stoploss_orders = []
+        self.instruments = {}
         self.rp = 0
         self.com = 0
         
@@ -49,12 +51,21 @@ class Application(Frame):
         self.symbols = []
         self.symbols.append({'symbol':'GMTUSDT', 'quantity': 2000, 'limitPrice': 1.1})
         self.symbols.append({'symbol':'UNFIUSDT', 'quantity': 300, 'limitPrice': 11})
-        self.listbox = Listbox(f1, font=('Lucida Grande', 12), width=10)
+        self.listbox = Listbox(f1, font=('Lucida Grande', 12), width=10, selectmode='browse')
         #self.listbox1.bind('<Double-Button-1>', self.OnDoubleClick_listbox)
         self.listbox.insert(1, 'GMTUSDT')
         self.listbox.insert(2, 'UNFIUSDT')
         self.listbox.insert(3, 'APEUSDT')
+        self.listbox.bind('<<ListboxSelect>>', self.listbox_onSelect)
         self.listbox.grid(row=0, rowspan=5, column=0, padx=5)
+
+        self.enNewItem = Entry(f1, font=myFont, width=10)
+        self.enNewItem.grid(row=6, column=0, padx=5)
+        self.btnAddItem = Button(f1, text="Add Symbol", command=self.add_to_list)
+        self.btnAddItem.grid(row=7, column=0, pady=2)
+        self.btnRemoveItem = Button(f1, text="Remove Symbol", command=self.remove_from_list)
+        self.btnRemoveItem.grid(row=8, column=0, pady=2)
+
 
         self.label4 = Label(f1, font=myFont, text="Symbol").grid(row=0, column=1)
         self.label5 = Label(f1, font=myFont, text="Quantity").grid(row=0, column=2)
@@ -240,6 +251,39 @@ class Application(Frame):
         except:
             print("Error in cancelling order")
 
+    def add_to_list(self):
+        symbol = self.enNewItem.get()
+        self.listbox.insert(END, symbol)
+        self.enNewItem.delete(0, END)
+        self.create_instrument(symbol=symbol)
+
+    def create_instrument(self, symbol):
+        ticker = instrument.Instrument(symbol=symbol)
+        self.instruments[symbol]=ticker
+        print(f"objeto {symbol} creado")
+        print(self.instruments)
+        print(self.instruments[symbol].ticksize)
+        
+    def remove_from_list(self):
+        
+        del self.instruments[self.listbox.get(self.listbox.curselection()[0])]
+        self.listbox.delete(self.listbox.curselection())
+        print(self.instruments)
+
+    def select_symbol(self, index):
+        self.listbox.selection_clear(0, END)
+        self.listbox.selection_set(index)
+        self.listbox.event_generate("<<ListboxSelect>>")
+
+    def listbox_onSelect(self, event):
+        index = int(self.listbox.curselection()[0])
+        value = self.listbox.get(index)
+        try:
+            varQuantity.set(self.instruments[value].size)
+        except:
+            pass
+        print('You selected item %d: %s' % (index, value))
+
     def cbSymbol_onEnter(self, event):
         varSymbol.set(varSymbol.get().upper())
         mytext = varSymbol.get()
@@ -376,6 +420,7 @@ class Application(Frame):
         varLimitPrice.set(varLast.get())
         self.focus_to_limit_price()
 
+    
 root = Tk()
 root.title("Conexion a Binance")
 root.geometry('600x480')
@@ -393,10 +438,13 @@ varLast = DoubleVar()
 app = Application(root)
 
 # ShortCuts
-root.bind('<F2>', lambda event: varOrderType.set('ACTIV'))
-root.bind('<F3>', lambda event: varOrderType.set('LIMIT'))
-root.bind('<F4>', lambda event: varOrderType.set('MARKET'))
-root.bind('<F5>', lambda event: varOrderType.set('STP'))
+root.bind('<F1>', lambda event: varOrderType.set('ACTIV'))
+root.bind('<F2>', lambda event: varOrderType.set('LIMIT'))
+root.bind('<F3>', lambda event: varOrderType.set('MARKET'))
+root.bind('<F4>', lambda event: varOrderType.set('STP'))
+root.bind('<F5>', lambda event: app.select_symbol(0))
+root.bind('<F6>', lambda event: app.select_symbol(1))
+root.bind('<F7>', lambda event: app.select_symbol(2))
 root.bind('<Control-q>', lambda event: app.focus_to_qty())
 root.bind('<Control-w>', lambda event: app.last_to_limit())
 root.bind('<Control-e>', lambda event: app.focus_to_limit_price())
