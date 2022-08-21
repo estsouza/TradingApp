@@ -15,25 +15,26 @@ from binance.client import Client
 from binance.enums import *
 import math
 import time
+import pickle
 
 class Application(Frame):
     
     def __init__(self, master):
         """Initialize the Frame"""
         ttk.Frame.__init__(self, master)
-
         self.grid()
+        # import instruments dictionary
+        with open('instruments.pkl', 'rb') as f:
+            self.instruments = pickle.load(f)
         self.create_widgets()
         self.symbol = 'BTCUSDT'
         self.client = None
         self.stoploss_orders = []
-        self.instruments = {}
         self.rp = 0
         self.com = 0
         
     def create_widgets(self):
         myFont = ('Lucida Grande', 12)
-
         #create connect button widget
         self.btnConnect = ttk.Button(self, text='Connect', command=self.connect_to_binance)
         self.btnConnect.grid(row=0, column=0)
@@ -48,14 +49,10 @@ class Application(Frame):
         n.grid(row=3, column=0, padx=5, pady=5, sticky=W)
         
         #create listbox
-        self.symbols = []
-        self.symbols.append({'symbol':'GMTUSDT', 'quantity': 2000, 'limitPrice': 1.1})
-        self.symbols.append({'symbol':'UNFIUSDT', 'quantity': 300, 'limitPrice': 11})
-        self.listbox = Listbox(f1, font=('Lucida Grande', 12), width=10, selectmode='browse')
+        self.listbox = Listbox(f1, font=('Lucida Grande', 12), width=10, selectmode='browse', exportselection=False, height=8)
+        for i in self.instruments.keys():
+            self.listbox.insert(END, i)
         #self.listbox1.bind('<Double-Button-1>', self.OnDoubleClick_listbox)
-        self.listbox.insert(1, 'GMTUSDT')
-        self.listbox.insert(2, 'UNFIUSDT')
-        self.listbox.insert(3, 'APEUSDT')
         self.listbox.bind('<<ListboxSelect>>', self.listbox_onSelect)
         self.listbox.grid(row=0, rowspan=5, column=0, padx=5)
 
@@ -65,7 +62,8 @@ class Application(Frame):
         self.btnAddItem.grid(row=7, column=0, pady=2)
         self.btnRemoveItem = Button(f1, text="Remove Symbol", command=self.remove_from_list)
         self.btnRemoveItem.grid(row=8, column=0, pady=2)
-
+        self.btnSaveSymbol = Button(f1, text="Save Symbol", command=self.save_symbol)
+        self.btnSaveSymbol.grid(row=9, column=0, pady=2)
 
         self.label4 = Label(f1, font=myFont, text="Symbol").grid(row=0, column=1)
         self.label5 = Label(f1, font=myFont, text="Quantity").grid(row=0, column=2)
@@ -128,7 +126,6 @@ class Application(Frame):
 
         #create Label
         self.label1 = Label(f1, font=myFont, width=8, text="Last").grid(row=6, column =1)
-
         #create textbox(Entry box) for the last price 
         self.tbLast = Entry(f1, font=myFont, width=10, textvariable = varLast)
         self.tbLast.grid(row=6, column =2,sticky = W)
@@ -255,20 +252,31 @@ class Application(Frame):
         symbol = self.enNewItem.get()
         self.listbox.insert(END, symbol)
         self.enNewItem.delete(0, END)
+        index = self.listbox.size()
+        self.select_symbol(index=index-1)
         self.create_instrument(symbol=symbol)
 
     def create_instrument(self, symbol):
         ticker = instrument.Instrument(symbol=symbol)
         self.instruments[symbol]=ticker
-        print(f"objeto {symbol} creado")
-        print(self.instruments)
-        print(self.instruments[symbol].ticksize)
+        print(f"instrumento {symbol} creado")
         
     def remove_from_list(self):
-        
         del self.instruments[self.listbox.get(self.listbox.curselection()[0])]
         self.listbox.delete(self.listbox.curselection())
+        self.select_symbol(0)
         print(self.instruments)
+
+    def save_symbol(self):
+        symbol = self.listbox.get(self.listbox.curselection()[0])
+        self.instruments[symbol].size = varQuantity.get()
+        self.save_instruments_dictionary()
+        print(self.instruments)
+
+    def save_instruments_dictionary(self):
+        with open('instruments.pkl', 'wb') as f:
+            pickle.dump(self.instruments, f)
+        print("diccionario guardado")
 
     def select_symbol(self, index):
         self.listbox.selection_clear(0, END)
@@ -436,6 +444,7 @@ varStopLoss = DoubleVar(root, value='0.1')
 varLast = DoubleVar()
 
 app = Application(root)
+app.select_symbol(0)
 
 # ShortCuts
 root.bind('<F1>', lambda event: varOrderType.set('ACTIV'))
@@ -445,6 +454,7 @@ root.bind('<F4>', lambda event: varOrderType.set('STP'))
 root.bind('<F5>', lambda event: app.select_symbol(0))
 root.bind('<F6>', lambda event: app.select_symbol(1))
 root.bind('<F7>', lambda event: app.select_symbol(2))
+root.bind('<F8>', lambda event: app.select_symbol(3))
 root.bind('<Control-q>', lambda event: app.focus_to_qty())
 root.bind('<Control-w>', lambda event: app.last_to_limit())
 root.bind('<Control-e>', lambda event: app.focus_to_limit_price())

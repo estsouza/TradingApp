@@ -3,6 +3,7 @@ class Instrument:
         self.symbol = symbol
         self.size = 100
         self.ticksize = 2
+        self.stoploss = 0.1
 
 
 """
