@@ -24,34 +24,7 @@ class Instrument:
         except:
             print(f"Failed to get {symbol} ticksize. Check Connection.")
     
-    """
-    def request_market_data(self, lastFieldVariable):
-        def on_message(ws, message):
-            json_message = json.loads(message)
-            print(json_message['k']['c'])
-            while self.streamToApp:
-                lastFieldVariable.set(json_message['k']['c']) 
-        
-        def on_error(ws, error):
-            print(error)
 
-        def on_close(close_msg):
-            print("### closed ###" + close_msg)
-
-        def streamKline():
-            lower = self.symbol.lower()
-            websocket.enableTrace(False)
-            socket = f'wss://fstream.binance.com/ws/{lower}@kline_1m'
-            self.ws = websocket.WebSocketApp(socket,
-                                        on_message=on_message,
-                                        on_error=on_error,
-                                        on_close=on_close)
-        
-            self.ws.run_forever()
-            return
-        print(f"Opening Stream Market Data: {self.symbol}")
-        streamKline()"""
-        
 
 """
 varSymbol.set(varSymbol.get().upper())

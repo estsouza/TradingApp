@@ -1,3 +1,4 @@
+from ast import If
 from http import client
 import tkinter
 from ib.ext.Contract import Contract
@@ -31,9 +32,10 @@ class Application(Frame):
         except:
             self.instruments = {}
         self.create_widgets()
-        self.symbol = 'BTCUSDT'
+        self.symbol = ''
         self.client = None
         self.stoploss_orders = []
+        self.websockets = {}
         self.rp = 0
         self.com = 0
         
@@ -81,7 +83,7 @@ class Application(Frame):
         self.cbSymbol = ttk.Combobox(f1, font=myFont, width=10, textvariable = varSymbol)
         self.cbSymbol.bind("<Return>", self.cbSymbol_onEnter) #when the enter key is pressed an event happens
         self.cbSymbol.bind('<<ComboboxSelected>>',self.cbSymbol_onEnter)
-        self.cbSymbol['values'] = ('SOLUSDT','BTCUSDT','ETHUSDT')
+        #self.cbSymbol['values'] = ('SOLUSDT','BTCUSDT','ETHUSDT')
         self.cbSymbol.grid(row=1, column=1, sticky=W)    
 
         #create spinbox (numericUpDown) for Limit Price
@@ -172,7 +174,9 @@ class Application(Frame):
         self.client = Client(keys.API_KEY, keys.API_SECRET, tld='com')
         self.check_connection()
         self.listenKey = self.get_listenKey(keys.API_KEY)
-        # ping userdata stream a 1 hora
+        for i in self.instruments.keys():
+                threading.Thread(target=self.request_market_data, args=[i]).start()
+                print(f"MD stream started for {i}")
         threading.Thread(target=self.request_user_data, args=[self.listenKey]).start()
         threading.Thread(target=self.keepalive_user_data, args=[keys.API_KEY]).start()
         
@@ -269,7 +273,8 @@ class Application(Frame):
         ticker = instrument.Instrument(symbol=symbol)
         self.instruments[symbol]=ticker
         ticker.request_ticksize(symbol=symbol, client=self.client)
-        threading.Thread(target=ticker.request_market_data, args=[varLast]).start()
+        
+        threading.Thread(target=self.request_market_data, args=[symbol]).start()
         print(f"instrumento {symbol} creado")
         
     def remove_from_list(self):
@@ -302,6 +307,8 @@ class Application(Frame):
         index = int(self.listbox.curselection()[0])
         value = self.listbox.get(index)
         try:
+            
+            #print(self.client.get_klines(symbol=value, interval=Client.KLINE_INTERVAL_1MINUTE))
             varSymbol.set(value)
             varQuantity.set(self.instruments[value].size)
             varTicksize.set(self.instruments[value].tickround)
@@ -334,9 +341,11 @@ class Application(Frame):
         #self.request_account_updates(self.account_code)
             
     def request_market_data(self, symbol):
+        lower = symbol.lower()
         def on_message(ws, message):
             json_message = json.loads(message)
-            varLast.set(json_message['k']['c']) 
+            if varSymbol.get() == symbol:
+                varLast.set(json_message['k']['c']) 
         
         def on_error(ws, error):
             print(error)
@@ -344,18 +353,18 @@ class Application(Frame):
         def on_close(close_msg):
             print("### closed ###" + close_msg)
 
-        def streamKline(currency):
+        def streamKline(lower):
             websocket.enableTrace(False)
-            socket = f'wss://fstream.binance.com/ws/{currency}@kline_1m'
-            self.ws = websocket.WebSocketApp(socket,
+            socket = f'wss://fstream.binance.com/ws/{lower}@kline_1m'
+            self.websockets[symbol] = websocket.WebSocketApp(socket,
                                         on_message=on_message,
                                         on_error=on_error,
                                         on_close=on_close)
         
-            self.ws.run_forever()
+            self.websockets[symbol].run_forever()
             return
         print(f"Opening Stream Market Data: {symbol}")
-        streamKline(self.symbol)
+        streamKline(lower)
         
     def cancel_market_data(self):
         try:
@@ -449,12 +458,11 @@ root = Tk()
 root.title("Conexion a Binance")
 root.geometry('600x480')
 root.attributes('-topmost', True)
-varSymbol = StringVar(root, value='BTCUSDT')
+varSymbol = StringVar()
 varQuantity = StringVar(root, value='100')
 varLimitPrice = StringVar(root, value='1')
 varOrderType = StringVar(root, value='ACTIV')
 varTicksize = IntVar(root, value='-1')
-
 varCallbackRate = StringVar(root, value='0.2')
 varStopLoss = DoubleVar(root, value='0.1')
 varLast = DoubleVar()
