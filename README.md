@@ -3,9 +3,9 @@
 features pendientes
 
  - paneles paralelos para distintas cryptos
-        - save and load dict to file con pickle
-        - pasar metodos de ws a clase instrument
         
+        - pasar metodos de ws a clase instrument
+
 
  - Opcion de poner nuevo SL solo si mejora el precio
 

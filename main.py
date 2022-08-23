@@ -1,3 +1,4 @@
+from http import client
 import tkinter
 from ib.ext.Contract import Contract
 from ib.ext.Order import Order
@@ -24,8 +25,11 @@ class Application(Frame):
         ttk.Frame.__init__(self, master)
         self.grid()
         # import instruments dictionary
-        with open('instruments.pkl', 'rb') as f:
-            self.instruments = pickle.load(f)
+        try:
+            with open('instruments.pkl', 'rb') as f:
+                self.instruments = pickle.load(f)
+        except:
+            self.instruments = {}
         self.create_widgets()
         self.symbol = 'BTCUSDT'
         self.client = None
@@ -187,7 +191,7 @@ class Application(Frame):
 
             if state == 'FILLED' and ((side == 'BUY' and positionSide == 'LONG') or (side == 'SELL' and positionSide == 'SHORT')):
                 print(f"--- TRADE OPENED in {symbol}---")
-                if self.stopLoss_enabled.get():
+                if self.instruments[symbol].stopLoss_enabled:
                     self.place_stoploss_order(positionSide=positionSide, symbol=symbol)
             
             elif ((side == 'BUY' and positionSide == 'SHORT') or (side == 'SELL' and positionSide == 'LONG')) and ex_type == 'TRADE':
@@ -234,7 +238,7 @@ class Application(Frame):
         for order in orders:
             if order['symbol'] == symbol and order['positionSide'] == positionSide and order['status'] == 'NEW' and order['reduceOnly'] == True:
                 if order['type'] == 'TRAILING_STOP_MARKET':
-                    if (order['positionSide'] == 'LONG' and order['activatePrice'] > varLast.get()) or (order['positionSide'] == 'SHORT' and order['activatePrice'] < varLast.get()): 
+                    if (order['positionSide'] == 'LONG' and float(order['activatePrice']) > float(varLast.get())) or (order['positionSide'] == 'SHORT' and float(order['activatePrice']) < float(varLast.get())): 
                         print(f"Cancelling {order['type']} order, positionSide: {order['positionSide']}, symbol: {order['symbol']}, orderId: {order['orderId']}.")
                         threading.Thread(target=self.cancel_order, args=[order['symbol'], order['orderId']]).start()
                 elif order['type'] != 'TRAILING_STOP_MARKET':
@@ -249,16 +253,23 @@ class Application(Frame):
             print("Error in cancelling order")
 
     def add_to_list(self):
-        symbol = self.enNewItem.get()
-        self.listbox.insert(END, symbol)
-        self.enNewItem.delete(0, END)
-        index = self.listbox.size()
-        self.select_symbol(index=index-1)
-        self.create_instrument(symbol=symbol)
+        symbol = self.enNewItem.get().upper()
+        if symbol == "":
+            print("Insert symbol name")
+            pass
+        else:
+            self.listbox.insert(END, symbol)
+            self.enNewItem.delete(0, END)
+            index = self.listbox.size()
+            self.create_instrument(symbol=symbol)
+            self.select_symbol(index=index-1)
+        
 
     def create_instrument(self, symbol):
         ticker = instrument.Instrument(symbol=symbol)
         self.instruments[symbol]=ticker
+        ticker.request_ticksize(symbol=symbol, client=self.client)
+        threading.Thread(target=ticker.request_market_data, args=[varLast]).start()
         print(f"instrumento {symbol} creado")
         
     def remove_from_list(self):
@@ -270,8 +281,12 @@ class Application(Frame):
     def save_symbol(self):
         symbol = self.listbox.get(self.listbox.curselection()[0])
         self.instruments[symbol].size = varQuantity.get()
+        self.instruments[symbol].stopLoss_enabled = self.stopLoss_enabled.get()
+        self.instruments[symbol].stoploss = varStopLoss.get()
+        self.instruments[symbol].trailing_enabled = self.trailing_enabled.get()
+        self.instruments[symbol].callbackRate = varCallbackRate.get()
+        self.instruments[symbol].tickround = varTicksize.get()
         self.save_instruments_dictionary()
-        print(self.instruments)
 
     def save_instruments_dictionary(self):
         with open('instruments.pkl', 'wb') as f:
@@ -287,10 +302,16 @@ class Application(Frame):
         index = int(self.listbox.curselection()[0])
         value = self.listbox.get(index)
         try:
+            varSymbol.set(value)
             varQuantity.set(self.instruments[value].size)
+            varTicksize.set(self.instruments[value].tickround)
+            varStopLoss.set(self.instruments[value].stoploss)
+            self.stopLoss_enabled.set(self.instruments[value].stopLoss_enabled)
+            varCallbackRate.set(self.instruments[value].callbackRate)
+            self.trailing_enabled.set(self.instruments[value].trailing_enabled)
         except:
-            pass
-        print('You selected item %d: %s' % (index, value))
+            print("Failed to retrieve symbol data")
+        
 
     def cbSymbol_onEnter(self, event):
         varSymbol.set(varSymbol.get().upper())
@@ -308,7 +329,7 @@ class Application(Frame):
         #varAvgPrice.set('0.00')
         self.ticksize = 0.01
         threading.Thread(target=self.request_market_data, args=[self.symbol]).start()
-        threading.Thread(target=self.request_ticksize, args=[self.symbol]).start()
+        #threading.Thread(target=self.request_ticksize, args=[self.symbol]).start()
         # calls method to request account updates
         #self.request_account_updates(self.account_code)
             
@@ -336,16 +357,6 @@ class Application(Frame):
         print(f"Opening Stream Market Data: {symbol}")
         streamKline(self.symbol)
         
-    
-    def request_ticksize(self, symbol):
-        try:
-            request = self.client.get_symbol_info(symbol)
-            self.ticksize = float((request['filters'][0]['tickSize']))
-            self.tickround = int(math.log10(self.ticksize)*-1)
-            print(f"{symbol}, ticksize: {self.tickround}")
-        except:
-            self.check_connection()
-
     def cancel_market_data(self):
         try:
             self.ws.close()
@@ -393,13 +404,18 @@ class Application(Frame):
     def place_stoploss_order(self, positionSide, symbol=""):
         if symbol == "":
             symbol = varSymbol.get()
-        if varTicksize.get() > -1:
-            self.tickround = varTicksize.get()
+        """if varTicksize.get() > -1:
+            self.tickround = varTicksize.get()"""
+        tickround = self.instruments[symbol].tickround
+        if symbol == varSymbol.get():
+            stoplossRate = varStopLoss.get() # get stoploss rate from spinbox in case it was changed and NOT saved to instrument object
+        else:
+            stoplossRate = self.instruments[symbol].stoploss
         if positionSide == 'LONG':
-            stopPrice = round(varLast.get()*(1-varStopLoss.get()/100),self.tickround)
+            stopPrice = round(varLast.get()*(1-stoplossRate/100),tickround)
             slSide = 'SELL'
         else:
-            stopPrice = round(varLast.get()*(1+varStopLoss.get()/100),self.tickround)
+            stopPrice = round(varLast.get()*(1+stoplossRate/100),tickround)
             slSide = 'BUY'
         for sl in self.stoploss_orders:
             if symbol == sl['symbol'] and positionSide == sl['positionSide']:
