@@ -15,7 +15,6 @@ import keys
 import instrument
 from binance.client import Client
 from binance.enums import *
-import math
 import time
 import pickle
 import functions
@@ -283,7 +282,6 @@ class Application(Frame):
         self.cancel_market_data(symbol=symbol)
         self.listbox.delete(self.listbox.curselection())
         self.select_symbol(0)
-        print(self.instruments)
 
     def save_symbol(self):
         symbol = self.listbox.get(self.listbox.curselection()[0])
@@ -299,6 +297,7 @@ class Application(Frame):
         with open('instruments.pkl', 'wb') as f:
             pickle.dump(self.instruments, f)
         print("Instruments Saved")
+        print(self.instruments.keys())
 
     def select_symbol(self, index):
         self.listbox.selection_clear(0, END)
@@ -458,20 +457,21 @@ app = Application(root)
 app.select_symbol(0)
 
 # ShortCuts
-root.bind('<F1>', lambda event: varOrderType.set('ACTIV'))
-root.bind('<F2>', lambda event: varOrderType.set('LIMIT'))
-root.bind('<F3>', lambda event: varOrderType.set('MARKET'))
-root.bind('<F4>', lambda event: varOrderType.set('STP'))
-root.bind('<F5>', lambda event: app.select_symbol(0))
-root.bind('<F6>', lambda event: app.select_symbol(1))
-root.bind('<F7>', lambda event: app.select_symbol(2))
-root.bind('<F8>', lambda event: app.select_symbol(3))
+root.bind('<F5>', lambda event: varOrderType.set('ACTIV'))
+root.bind('<F6>', lambda event: varOrderType.set('LIMIT'))
+root.bind('<F7>', lambda event: varOrderType.set('MARKET'))
+root.bind('<F8>', lambda event: varOrderType.set('STP'))
+root.bind('<F1>', lambda event: app.select_symbol(0))
+root.bind('<F2>', lambda event: app.select_symbol(1))
+root.bind('<F3>', lambda event: app.select_symbol(2))
+root.bind('<F4>', lambda event: app.select_symbol(3))
 root.bind('<Control-q>', lambda event: app.focus_to_qty())
 root.bind('<Control-w>', lambda event: app.last_to_limit())
 root.bind('<Control-e>', lambda event: app.focus_to_limit_price())
 root.bind('<Control-f>', lambda event: app.focus_to_stoploss())
 root.bind('<Control-r>', lambda event: app.cancel_all())
 root.bind('<Control-a>', lambda event: functions.get_slippage(client=app.client, symbol=varSymbol.get(), size=int(varQuantity.get())))
+root.bind('<Control-s>', lambda event: functions.calculate_size(lastPrice=varLast.get(), symbol=varSymbol.get()))
 root.bind('<Home>', lambda event: app.sell())
 root.bind('<Prior>', lambda event: app.buy()) # PageUp
 root.bind('<End>', lambda event: app.place_stoploss_order(positionSide='SHORT'))

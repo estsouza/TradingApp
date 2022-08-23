@@ -30,6 +30,14 @@ def get_slippage(client, symbol, size):
 
     buyslip = round((buyap/float(depth['asks'][0][0]) -1)*1000, 2)
     sellslip = round((sellap/float(depth['bids'][0][0]) -1)*-1000, 2)
-    print(f"Buying slippage {buyslip} %o")
-    print(f"Selling slippage {sellslip} %o")
+    print(f"Buying slippage {buyslip} %o @ {symbol}")
+    print(f"Selling slippage {sellslip} %o @ {symbol}")
     return buyslip, sellslip
+
+def calculate_size(lastPrice, symbol):
+    print(f"2000 USD: {round(2000/lastPrice, 1)} {symbol}")
+    print(f"4000 USD: {round(4000/lastPrice, 1)} {symbol}")
+    print(f"6000 USD: {round(6000/lastPrice, 1)} {symbol}")
+    print(f"8000 USD: {round(8000/lastPrice, 1)} {symbol}")
+    print(f"10000 USD: {round(10000/lastPrice, 1)} {symbol}")
+
