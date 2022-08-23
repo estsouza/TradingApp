@@ -18,6 +18,7 @@ from binance.enums import *
 import math
 import time
 import pickle
+import functions
 
 class Application(Frame):
     
@@ -92,7 +93,8 @@ class Application(Frame):
         self.entQuantity = Entry(f1, font=myFont, width=7, textvariable=varQuantity)
         self.entQuantity.grid(row=1, column=2)
         #create spinbox (numericUpDown) for Limit Price
-        self.spinLimitPrice = Spinbox(f1,font=myFont, format='%10.5f', increment=.01, from_=0.0, to=100000.0, width=10, textvariable=varLimitPrice)
+        #self.spinLimitPrice = Spinbox(f1,font=myFont, format='%8.5f', increment=.01, from_=0.0, to=100000.0, width=10, textvariable=varLimitPrice)
+        self.spinLimitPrice = Spinbox(f1,font=myFont, increment=0.01, from_=0.0, to=100000.0, width=10, textvariable=varLimitPrice)
         # when control and up or down arrow are pressed call spenLimitDime()
         #self.spinLimitPrice.bind('<Control-Button-1>', self.spinLimitDime)
         # when Alt and up or down arrow are pressed call spenLimitPenny()
@@ -177,7 +179,6 @@ class Application(Frame):
         self.listenKey = self.get_listenKey(keys.API_KEY)
         for i in self.instruments.keys():
                 threading.Thread(target=self.request_market_data, args=[i]).start()
-                print(f"MD stream started for {i}")
         threading.Thread(target=self.request_user_data, args=[self.listenKey]).start()
         threading.Thread(target=self.keepalive_user_data, args=[keys.API_KEY]).start()
         
@@ -207,12 +208,12 @@ class Application(Frame):
                     self.com += com
                     self.rp += rp
                 elif state == 'FILLED':
-                    threading.Thread(target=self.get_orders_to_cancel, args=[positionSide, symbol]).start()
-                    #self.get_orders_to_cancel(positionSide=positionSide, symbol=symbol)
+                    
                     self.com += com
                     self.rp += rp
                     print(f"--- TRADE CLOSED in {symbol}---")
                     print(f"PnL: {round(self.rp,2)}. Fees: {round((self.com * 2), 2)} {comc}")
+                    threading.Thread(target=self.get_orders_to_cancel, args=[positionSide, symbol]).start()
                     self.rp = 0
                     self.com = 0
                                
@@ -243,7 +244,7 @@ class Application(Frame):
         for order in orders:
             if order['symbol'] == symbol and order['positionSide'] == positionSide and order['status'] == 'NEW' and order['reduceOnly'] == True:
                 if order['type'] == 'TRAILING_STOP_MARKET':
-                    if (order['positionSide'] == 'LONG' and float(order['activatePrice']) > float(varLast.get())) or (order['positionSide'] == 'SHORT' and float(order['activatePrice']) < float(varLast.get())): 
+                    if (order['positionSide'] == 'LONG' and float(order['activatePrice']) < float(varLast.get())*1.002) or (order['positionSide'] == 'SHORT' and float(order['activatePrice']) > float(varLast.get())*0.998): 
                         print(f"Cancelling {order['type']} order, positionSide: {order['positionSide']}, symbol: {order['symbol']}, orderId: {order['orderId']}.")
                         threading.Thread(target=self.cancel_order, args=[order['symbol'], order['orderId']]).start()
                 elif order['type'] != 'TRAILING_STOP_MARKET':
@@ -273,9 +274,8 @@ class Application(Frame):
         ticker = instrument.Instrument(symbol=symbol)
         self.instruments[symbol]=ticker
         ticker.request_ticksize(symbol=symbol, client=self.client)
-        
         threading.Thread(target=self.request_market_data, args=[symbol]).start()
-        print(f"instrumento {symbol} creado")
+        print(f"Instrumento {symbol} creado")
         
     def remove_from_list(self):
         symbol = self.listbox.get(self.listbox.curselection()[0])
@@ -312,11 +312,13 @@ class Application(Frame):
             varLast.set(self.websockets[symbol]['last'])
             varSymbol.set(symbol)
             varQuantity.set(self.instruments[symbol].size)
+            self.last_to_limit()
             varTicksize.set(self.instruments[symbol].tickround)
             varStopLoss.set(self.instruments[symbol].stoploss)
             self.stopLoss_enabled.set(self.instruments[symbol].stopLoss_enabled)
             varCallbackRate.set(self.instruments[symbol].callbackRate)
             self.trailing_enabled.set(self.instruments[symbol].trailing_enabled)
+            self.spinLimitPrice['increment'] = self.instruments[symbol].ticksize
         except:
             print("Failed to retrieve symbol data")
             
@@ -445,7 +447,7 @@ root.geometry('600x480')
 root.attributes('-topmost', True)
 varSymbol = StringVar()
 varQuantity = StringVar(root, value='100')
-varLimitPrice = StringVar(root, value='1')
+varLimitPrice = DoubleVar(root, value='1')
 varOrderType = StringVar(root, value='ACTIV')
 varTicksize = IntVar(root, value='0')
 varCallbackRate = StringVar(root, value='0.2')
@@ -469,6 +471,7 @@ root.bind('<Control-w>', lambda event: app.last_to_limit())
 root.bind('<Control-e>', lambda event: app.focus_to_limit_price())
 root.bind('<Control-f>', lambda event: app.focus_to_stoploss())
 root.bind('<Control-r>', lambda event: app.cancel_all())
+root.bind('<Control-a>', lambda event: functions.get_slippage(client=app.client, symbol=varSymbol.get(), size=int(varQuantity.get())))
 root.bind('<Home>', lambda event: app.sell())
 root.bind('<Prior>', lambda event: app.buy()) # PageUp
 root.bind('<End>', lambda event: app.place_stoploss_order(positionSide='SHORT'))
