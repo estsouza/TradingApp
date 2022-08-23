@@ -2,11 +2,6 @@
 
 features pendientes
 
- - paneles paralelos para distintas cryptos
-        
-        - pasar metodos de ws a clase instrument
-
-
  - Opcion de poner nuevo SL solo si mejora el precio
 
  - guardar trades. analisis, exportar, etc

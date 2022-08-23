@@ -63,6 +63,7 @@ class Application(Frame):
         self.listbox.grid(row=0, rowspan=5, column=0, padx=5)
 
         self.enNewItem = Entry(f1, font=myFont, width=10)
+        self.enNewItem.bind('<Return>', self.add_to_list)
         self.enNewItem.grid(row=6, column=0, padx=5)
         self.btnAddItem = Button(f1, text="Add Symbol", command=self.add_to_list)
         self.btnAddItem.grid(row=7, column=0, pady=2)
@@ -80,9 +81,9 @@ class Application(Frame):
         self.labe21 = Label(f1, font=myFont, text="Stop Loss (%)").grid(row=2, column =4)
 
         #create combo box for the Symbol
-        self.cbSymbol = ttk.Combobox(f1, font=myFont, width=10, textvariable = varSymbol)
-        self.cbSymbol.bind("<Return>", self.cbSymbol_onEnter) #when the enter key is pressed an event happens
-        self.cbSymbol.bind('<<ComboboxSelected>>',self.cbSymbol_onEnter)
+        self.cbSymbol = ttk.Entry(f1, font=myFont, width=10, textvariable = varSymbol)
+        #self.cbSymbol.bind("<Return>", self.cbSymbol_onEnter) #when the enter key is pressed an event happens
+        #self.cbSymbol.bind('<<ComboboxSelected>>',self.cbSymbol_onEnter)
         #self.cbSymbol['values'] = ('SOLUSDT','BTCUSDT','ETHUSDT')
         self.cbSymbol.grid(row=1, column=1, sticky=W)    
 
@@ -256,7 +257,7 @@ class Application(Frame):
         except:
             print("Error in cancelling order")
 
-    def add_to_list(self):
+    def add_to_list(self, event=None):
         symbol = self.enNewItem.get().upper()
         if symbol == "":
             print("Insert symbol name")
@@ -267,7 +268,6 @@ class Application(Frame):
             index = self.listbox.size()
             self.create_instrument(symbol=symbol)
             self.select_symbol(index=index-1)
-        
 
     def create_instrument(self, symbol):
         ticker = instrument.Instrument(symbol=symbol)
@@ -278,7 +278,9 @@ class Application(Frame):
         print(f"instrumento {symbol} creado")
         
     def remove_from_list(self):
-        del self.instruments[self.listbox.get(self.listbox.curselection()[0])]
+        symbol = self.listbox.get(self.listbox.curselection()[0])
+        del self.instruments[symbol]
+        self.cancel_market_data(symbol=symbol)
         self.listbox.delete(self.listbox.curselection())
         self.select_symbol(0)
         print(self.instruments)
@@ -296,7 +298,7 @@ class Application(Frame):
     def save_instruments_dictionary(self):
         with open('instruments.pkl', 'wb') as f:
             pickle.dump(self.instruments, f)
-        print("diccionario guardado")
+        print("Instruments Saved")
 
     def select_symbol(self, index):
         self.listbox.selection_clear(0, END)
@@ -305,47 +307,28 @@ class Application(Frame):
 
     def listbox_onSelect(self, event):
         index = int(self.listbox.curselection()[0])
-        value = self.listbox.get(index)
+        symbol = self.listbox.get(index)
         try:
-            
-            #print(self.client.get_klines(symbol=value, interval=Client.KLINE_INTERVAL_1MINUTE))
-            varSymbol.set(value)
-            varQuantity.set(self.instruments[value].size)
-            varTicksize.set(self.instruments[value].tickround)
-            varStopLoss.set(self.instruments[value].stoploss)
-            self.stopLoss_enabled.set(self.instruments[value].stopLoss_enabled)
-            varCallbackRate.set(self.instruments[value].callbackRate)
-            self.trailing_enabled.set(self.instruments[value].trailing_enabled)
+            varLast.set(self.websockets[symbol]['last'])
+            varSymbol.set(symbol)
+            varQuantity.set(self.instruments[symbol].size)
+            varTicksize.set(self.instruments[symbol].tickround)
+            varStopLoss.set(self.instruments[symbol].stoploss)
+            self.stopLoss_enabled.set(self.instruments[symbol].stopLoss_enabled)
+            varCallbackRate.set(self.instruments[symbol].callbackRate)
+            self.trailing_enabled.set(self.instruments[symbol].trailing_enabled)
         except:
             print("Failed to retrieve symbol data")
-        
-
-    def cbSymbol_onEnter(self, event):
-        varSymbol.set(varSymbol.get().upper())
-        mytext = varSymbol.get()
-        vals = self.cbSymbol.cget('values')
-        self.cbSymbol.select_range(0, END)
-        if not vals:
-            self.cbSymbol.configure(values = (mytext, ))
-        elif mytext not in vals: 
-            self.cbSymbol.configure(values = vals + (mytext, ))
-        mySymbol = varSymbol.get()
-        self.symbol = mySymbol.lower()
-        self.cancel_market_data()
-        #varPosition.set('0')
-        #varAvgPrice.set('0.00')
-        self.ticksize = 0.01
-        threading.Thread(target=self.request_market_data, args=[self.symbol]).start()
-        #threading.Thread(target=self.request_ticksize, args=[self.symbol]).start()
-        # calls method to request account updates
-        #self.request_account_updates(self.account_code)
             
     def request_market_data(self, symbol):
         lower = symbol.lower()
         def on_message(ws, message):
             json_message = json.loads(message)
+            last = json_message['k']['c']
             if varSymbol.get() == symbol:
-                varLast.set(json_message['k']['c']) 
+                varLast.set(last)
+            else:
+                self.websockets[symbol]['last'] = last
         
         def on_error(ws, error):
             print(error)
@@ -356,19 +339,21 @@ class Application(Frame):
         def streamKline(lower):
             websocket.enableTrace(False)
             socket = f'wss://fstream.binance.com/ws/{lower}@kline_1m'
-            self.websockets[symbol] = websocket.WebSocketApp(socket,
+            self.websockets[symbol] = {}
+            self.websockets[symbol]['ws'] = websocket.WebSocketApp(socket,
                                         on_message=on_message,
                                         on_error=on_error,
                                         on_close=on_close)
         
-            self.websockets[symbol].run_forever()
+            self.websockets[symbol]['ws'].run_forever()
             return
         print(f"Opening Stream Market Data: {symbol}")
         streamKline(lower)
         
-    def cancel_market_data(self):
+    def cancel_market_data(self, symbol):
         try:
-            self.ws.close()
+            self.websockets[symbol]['ws'].close()
+            print("websocket closed")
         except:
             pass
 
@@ -462,7 +447,7 @@ varSymbol = StringVar()
 varQuantity = StringVar(root, value='100')
 varLimitPrice = StringVar(root, value='1')
 varOrderType = StringVar(root, value='ACTIV')
-varTicksize = IntVar(root, value='-1')
+varTicksize = IntVar(root, value='0')
 varCallbackRate = StringVar(root, value='0.2')
 varStopLoss = DoubleVar(root, value='0.1')
 varLast = DoubleVar()
