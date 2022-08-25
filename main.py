@@ -232,9 +232,18 @@ class Application(Frame):
         streamUserdata(self.listenKey)
 
     def cancel_all(self):
-        self.client.futures_cancel_all_open_orders(symbol= self.symbol)
+        for symbol in self.instruments.keys():
+            self.client.futures_cancel_all_open_orders(symbol=symbol)
         self.stoploss_orders = []
         print("All orders cancelled")
+
+    def cancel_by_symbol(self):
+        symbol = varSymbol.get()
+        self.client.futures_cancel_all_open_orders(symbol=symbol)
+        for sl in self.stoploss_orders:
+            if symbol == sl['symbol']:
+                self.stoploss_orders.remove(sl)
+        print(f"Orders cancelled for {symbol}")
 
     def get_orders_to_cancel(self, positionSide, symbol):
         print("Getting hanging orders")
@@ -410,12 +419,10 @@ class Application(Frame):
             stoplossRate = self.instruments[symbol].stoploss
         if positionSide == 'LONG':
             stopPrice = round(self.websockets[symbol]['last']*(1-stoplossRate/100),tickround)
-            print(self.websockets[symbol]['last'], stopPrice)
             slSide = 'SELL'
         else:
             stopPrice = round(self.websockets[symbol]['last']*(1+stoplossRate/100),tickround)
             slSide = 'BUY'
-        print(self.websockets[symbol]['last'], stopPrice)
         for sl in self.stoploss_orders:
             if symbol == sl['symbol'] and positionSide == sl['positionSide']:
                 #chequear si el stopLoss es mejor
@@ -473,7 +480,8 @@ root.bind('<Control-q>', lambda event: app.focus_to_qty())
 root.bind('<Control-w>', lambda event: app.last_to_limit())
 root.bind('<Control-e>', lambda event: app.focus_to_limit_price())
 root.bind('<Control-f>', lambda event: app.focus_to_stoploss())
-root.bind('<Control-r>', lambda event: app.cancel_all())
+root.bind('<Control-t>', lambda event: app.cancel_all())
+root.bind('<Control-r>', lambda event: app.cancel_by_symbol())
 root.bind('<Control-a>', lambda event: functions.get_slippage(client=app.client, symbol=varSymbol.get(), size=int(varQuantity.get())))
 root.bind('<Control-s>', lambda event: app.save_symbol())
 root.bind('<Control-d>', lambda event: functions.calculate_size(lastPrice=varLast.get(), symbol=varSymbol.get()))
