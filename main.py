@@ -297,7 +297,8 @@ class Application(Frame):
         with open('instruments.pkl', 'wb') as f:
             pickle.dump(self.instruments, f)
         print("Instruments Saved")
-        print(self.instruments.keys())
+        for i in self.instruments.keys():
+            print(i)
 
     def select_symbol(self, index):
         self.listbox.selection_clear(0, END)
@@ -325,11 +326,12 @@ class Application(Frame):
         lower = symbol.lower()
         def on_message(ws, message):
             json_message = json.loads(message)
-            last = json_message['k']['c']
+            last = float(json_message['k']['c'])
+            self.websockets[symbol]['last'] = last
             if varSymbol.get() == symbol:
                 varLast.set(last)
-            else:
-                self.websockets[symbol]['last'] = last
+            
+                
         
         def on_error(ws, error):
             print(error)
@@ -407,11 +409,13 @@ class Application(Frame):
         else:
             stoplossRate = self.instruments[symbol].stoploss
         if positionSide == 'LONG':
-            stopPrice = round(varLast.get()*(1-stoplossRate/100),tickround)
+            stopPrice = round(self.websockets[symbol]['last']*(1-stoplossRate/100),tickround)
+            print(self.websockets[symbol]['last'], stopPrice)
             slSide = 'SELL'
         else:
-            stopPrice = round(varLast.get()*(1+stoplossRate/100),tickround)
+            stopPrice = round(self.websockets[symbol]['last']*(1+stoplossRate/100),tickround)
             slSide = 'BUY'
+        print(self.websockets[symbol]['last'], stopPrice)
         for sl in self.stoploss_orders:
             if symbol == sl['symbol'] and positionSide == sl['positionSide']:
                 #chequear si el stopLoss es mejor
@@ -471,7 +475,8 @@ root.bind('<Control-e>', lambda event: app.focus_to_limit_price())
 root.bind('<Control-f>', lambda event: app.focus_to_stoploss())
 root.bind('<Control-r>', lambda event: app.cancel_all())
 root.bind('<Control-a>', lambda event: functions.get_slippage(client=app.client, symbol=varSymbol.get(), size=int(varQuantity.get())))
-root.bind('<Control-s>', lambda event: functions.calculate_size(lastPrice=varLast.get(), symbol=varSymbol.get()))
+root.bind('<Control-s>', lambda event: app.save_symbol())
+root.bind('<Control-d>', lambda event: functions.calculate_size(lastPrice=varLast.get(), symbol=varSymbol.get()))
 root.bind('<Home>', lambda event: app.sell())
 root.bind('<Prior>', lambda event: app.buy()) # PageUp
 root.bind('<End>', lambda event: app.place_stoploss_order(positionSide='SHORT'))
