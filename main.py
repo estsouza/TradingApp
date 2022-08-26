@@ -300,6 +300,9 @@ class Application(Frame):
         self.instruments[symbol].trailing_enabled = self.trailing_enabled.get()
         self.instruments[symbol].callbackRate = varCallbackRate.get()
         self.instruments[symbol].tickround = varTicksize.get()
+        self.instruments[symbol].ticksize = 10 ** (self.instruments[symbol].tickround *-1)
+        self.spinLimitPrice['increment'] = self.instruments[symbol].ticksize
+        print(self.instruments[symbol].ticksize)
         self.save_instruments_dictionary()
 
     def save_instruments_dictionary(self):
