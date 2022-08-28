@@ -1,5 +1,6 @@
 # TradingApp
 
+
 features pendientes
 
  - Opcion de poner nuevo SL solo si mejora el precio
