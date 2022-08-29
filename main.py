@@ -1,22 +1,16 @@
-from ast import If
-from http import client
 import tkinter
-from ib.ext.Contract import Contract
-from ib.ext.Order import Order
-from ib.opt import Connection, message
 from tkinter import *
 from tkinter import ttk
 import threading
 import websocket
 import json
 import requests
-from binance import AsyncClient, BinanceSocketManager
 import keys
-import instrument
 from binance.client import Client
 from binance.enums import *
 import time
 import pickle
+import instrument
 import functions
 
 class Application(Frame):
@@ -82,9 +76,6 @@ class Application(Frame):
 
         #create combo box for the Symbol
         self.cbSymbol = ttk.Entry(f1, font=myFont, width=10, textvariable = varSymbol)
-        #self.cbSymbol.bind("<Return>", self.cbSymbol_onEnter) #when the enter key is pressed an event happens
-        #self.cbSymbol.bind('<<ComboboxSelected>>',self.cbSymbol_onEnter)
-        #self.cbSymbol['values'] = ('SOLUSDT','BTCUSDT','ETHUSDT')
         self.cbSymbol.grid(row=1, column=1, sticky=W)    
 
         #create spinbox (numericUpDown) for Limit Price
@@ -342,9 +333,7 @@ class Application(Frame):
             self.websockets[symbol]['last'] = last
             if varSymbol.get() == symbol:
                 varLast.set(last)
-            
-                
-        
+
         def on_error(ws, error):
             print(error)
 
@@ -413,8 +402,6 @@ class Application(Frame):
     def place_stoploss_order(self, positionSide, symbol=""):
         if symbol == "":
             symbol = varSymbol.get()
-        """if varTicksize.get() > -1:
-            self.tickround = varTicksize.get()"""
         tickround = self.instruments[symbol].tickround
         if symbol == varSymbol.get():
             stoplossRate = varStopLoss.get() # get stoploss rate from spinbox in case it was changed and NOT saved to instrument object
@@ -455,7 +442,7 @@ class Application(Frame):
 
     
 root = Tk()
-root.title("Conexion a Binance")
+root.title("Trading App")
 root.geometry('600x480')
 root.attributes('-topmost', True)
 varSymbol = StringVar()
